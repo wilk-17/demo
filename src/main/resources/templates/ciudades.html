@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Ciudades</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usuarios">Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/estados">Estados</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ciudades">Ciudades</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-geo-alt-fill text-warning"></i> Gestión de Ciudades</h2>
+                <button class="btn btn-warning" onclick="loadCities()">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+            </div>
+
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Filtrar por Estado:</label>
+                        <select class="form-select" id="stateFilter" onchange="filterByState()">
+                            <option value="">Todos los estados</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar ciudad..." onkeyup="searchCities()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalCities" class="text-warning">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-warning">
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Ciudad</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="citiesTableBody">
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allCities = [];
+        let allStates = [];
+
+        async function loadCities() {
+            try {
+                const [citiesResponse, statesResponse] = await Promise.all([
+                    fetch('/city'),
+                    fetch('/state')
+                ]);
+                
+                allCities = await citiesResponse.json();
+                allStates = await statesResponse.json();
+                
+                // Create state map
+                const stateMap = {};
+                allStates.forEach(state => {
+                    stateMap[state.id] = state;
+                });
+
+                // Populate state filter
+                const stateFilter = document.getElementById('stateFilter');
+                stateFilter.innerHTML = '<option value="">Todos los estados</option>';
+                allStates.forEach(state => {
+                    stateFilter.innerHTML += `<option value="${state.id}">${state.description}</option>`;
+                });
+
+                displayCities(allCities, stateMap);
+            } catch (error) {
+                console.error('Error al cargar ciudades:', error);
+                document.getElementById('citiesTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayCities(cities, stateMap) {
+            const tbody = document.getElementById('citiesTableBody');
+            tbody.innerHTML = '';
+
+            if (cities.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron ciudades
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            cities.forEach(city => {
+                const state = stateMap[city.stateId] || {};
+                const row = `
+                    <tr>
+                        <td><strong>${city.id}</strong></td>
+                        <td><span class="badge bg-info">${city.code || 'N/A'}</span></td>
+                        <td><i class="bi bi-building"></i> ${city.description}</td>
+                        <td><span class="badge bg-secondary">${state.description || 'Desconocido'}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            document.getElementById('totalCities').textContent = cities.length;
+        }
+
+        function filterByState() {
+            const stateId = document.getElementById('stateFilter').value;
+            const stateMap = {};
+            allStates.forEach(state => {
+                stateMap[state.id] = state;
+            });
+
+            if (stateId === '') {
+                displayCities(allCities, stateMap);
+            } else {
+                const filtered = allCities.filter(city => city.stateId == stateId);
+                displayCities(filtered, stateMap);
+            }
+        }
+
+        function searchCities() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const stateMap = {};
+            allStates.forEach(state => {
+                stateMap[state.id] = state;
+            });
+
+            if (searchTerm === '') {
+                displayCities(allCities, stateMap);
+            } else {
+                const filtered = allCities.filter(city => 
+                    city.description.toLowerCase().includes(searchTerm) ||
+                    (city.code && city.code.toLowerCase().includes(searchTerm))
+                );
+                displayCities(filtered, stateMap);
+            }
+        }
+
+        // Load cities on page load
+        loadCities();
+    </script>
+</body>
+</html>
