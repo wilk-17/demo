@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Organizaciones</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .navbar { background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .card { border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: none; }
+                .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-shop"></i> Sistema de Gestión</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/organizaciones">Organizaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/sucursales">Sucursales</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-building text-primary"></i> Gestión de Organizaciones</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#orgModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Organización
+                    </button>
+                    <button class="btn btn-primary" onclick="loadOrganizations()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre..." onkeyup="searchOrganizations()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalOrganizations" class="text-info">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Histórico</th>
+                            <th>Nombre Actual</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="organizationsTableBody">
+                        <tr><td colspan="4" class="text-center"><div class="spinner-border text-primary"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="orgModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Organización</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="orgForm">
+                        <input type="hidden" id="orgId">
+                        <div class="mb-3">
+                            <label for="historicalName" class="form-label">Nombre Histórico *</label>
+                            <input type="text" class="form-control" id="historicalName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="currentName" class="form-label">Nombre Actual *</label>
+                            <input type="text" class="form-control" id="currentName" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveOrganization()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentId = null;
+        let allOrganizations = [];
+
+        async function loadOrganizations() {
+            try {
+                const response = await fetch('/api/organizations');
+                allOrganizations = await response.json();
+                displayOrganizations(allOrganizations);
+            } catch (error) {
+                document.getElementById('organizationsTableBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error al cargar datos</td></tr>';
+            }
+        }
+
+        function displayOrganizations(orgs) {
+            const tbody = document.getElementById('organizationsTableBody');
+            tbody.innerHTML = '';
+
+            if (orgs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted"><i class="bi bi-inbox"></i> No se encontraron organizaciones</td></tr>';
+                document.getElementById('totalOrganizations').textContent = '0';
+                return;
+            }
+
+            orgs.forEach(org => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${org.id}</strong></td>
+                        <td>${org.historicalName}</td>
+                        <td><span class="badge bg-info">${org.currentName}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editOrganization(${org.id})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteOrganization(${org.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            document.getElementById('totalOrganizations').textContent = orgs.length;
+        }
+
+        function searchOrganizations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayOrganizations(allOrganizations);
+            } else {
+                const filtered = allOrganizations.filter(org => 
+                    org.historicalName.toLowerCase().includes(searchTerm) ||
+                    org.currentName.toLowerCase().includes(searchTerm)
+                );
+                displayOrganizations(filtered);
+            }
+        }
+
+        function openCreateModal() {
+            currentId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Organización';
+            document.getElementById('orgForm').reset();
+        }
+
+        async function editOrganization(id) {
+            try {
+                const response = await fetch(`/api/organizations/${id}`);
+                const org = await response.json();
+                currentId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Organización';
+                document.getElementById('historicalName').value = org.historicalName;
+                document.getElementById('currentName').value = org.currentName;
+                new bootstrap.Modal(document.getElementById('orgModal')).show();
+            } catch (error) {
+                alert('Error al cargar la organización');
+            }
+        }
+
+        async function saveOrganization() {
+            const data = {
+                historicalName: document.getElementById('historicalName').value,
+                currentName: document.getElementById('currentName').value
+            };
+
+            if (!data.historicalName || !data.currentName) {
+                alert('Todos los campos son requeridos');
+                return;
+            }
+
+            try {
+                const url = currentId ? `/api/organizations/${currentId}` : '/api/organizations';
+                const method = currentId ? 'PUT' : 'POST';
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('orgModal')).hide();
+                    loadOrganizations();
+                    alert(currentId ? 'Actualizado exitosamente' : 'Creado exitosamente');
+                } else {
+                    alert('Error al guardar');
+                }
+            } catch (error) {
+                alert('Error al guardar');
+            }
+        }
+
+        async function deleteOrganization(id) {
+            if (!confirm('¿Eliminar esta organización?')) return;
+
+            try {
+                const response = await fetch(`/api/organizations/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadOrganizations();
+                    alert('Eliminado exitosamente');
+                } else {
+                    alert('Error al eliminar');
+                }
+            } catch (error) {
+                alert('Error al eliminar');
+            }
+        }
+
+        loadOrganizations();
+    </script>
+</body>
+</html>

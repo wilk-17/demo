@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Marcas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/marcas">Marcas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-tag-fill text-primary"></i> Gestión de Marcas</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#brandModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Marca
+                    </button>
+                    <button class="btn btn-primary" onclick="loadBrands()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre..." onkeyup="searchBrands()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalBrands" class="text-primary">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brandsTableBody">
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Marca -->
+    <div class="modal fade" id="brandModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Marca</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="brandForm">
+                        <input type="hidden" id="brandId">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBrand()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentBrandId = null;
+        let allBrands = [];
+
+        async function loadBrands() {
+            try {
+                const response = await fetch('/brand');
+                allBrands = await response.json();
+                displayBrands(allBrands);
+            } catch (error) {
+                console.error('Error al cargar marcas:', error);
+                document.getElementById('brandsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayBrands(brands) {
+            const tbody = document.getElementById('brandsTableBody');
+            tbody.innerHTML = '';
+
+            if (brands.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron marcas
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalBrands').textContent = '0';
+                return;
+            }
+
+            brands.forEach(brand => {
+                    const row = `
+                        <tr>
+                            <td><strong>${brand.id}</strong></td>
+                            <td><i class="bi bi-tag"></i> ${brand.name}</td>
+                            <td>${brand.description || '<span class="text-muted">Sin descripción</span>'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editBrand(${brand.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteBrand(${brand.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+                
+                document.getElementById('totalBrands').textContent = brands.length;
+        }
+
+        function searchBrands() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayBrands(allBrands);
+            } else {
+                const filtered = allBrands.filter(brand => 
+                    brand.name.toLowerCase().includes(searchTerm) ||
+                    (brand.description && brand.description.toLowerCase().includes(searchTerm))
+                );
+                displayBrands(filtered);
+            }
+        }
+
+        function openCreateModal() {
+            currentBrandId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Marca';
+            document.getElementById('brandForm').reset();
+        }
+
+        async function editBrand(id) {
+            try {
+                const response = await fetch(`/brand/${id}`);
+                const brand = await response.json();
+                
+                currentBrandId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Marca';
+                document.getElementById('name').value = brand.name;
+                document.getElementById('description').value = brand.description || '';
+                
+                new bootstrap.Modal(document.getElementById('brandModal')).show();
+            } catch (error) {
+                alert('Error al cargar la marca');
+            }
+        }
+
+        async function saveBrand() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+
+            if (!name) {
+                alert('El nombre es requerido');
+                return;
+            }
+
+            const brandData = { 
+                name, 
+                description: description || null 
+            };
+            
+            try {
+                let response;
+                if (currentBrandId) {
+                    response = await fetch(`/brand/${currentBrandId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(brandData)
+                    });
+                } else {
+                    response = await fetch('/brand', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(brandData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('brandModal')).hide();
+                    loadBrands();
+                    alert(currentBrandId ? 'Marca actualizada exitosamente' : 'Marca creada exitosamente');
+                } else {
+                    alert('Error al guardar la marca');
+                }
+            } catch (error) {
+                alert('Error al guardar la marca');
+            }
+        }
+
+        async function deleteBrand(id) {
+            if (!confirm('¿Está seguro de eliminar esta marca?')) return;
+
+            try {
+                const response = await fetch(`/brand/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadBrands();
+                    alert('Marca eliminada exitosamente');
+                } else {
+                    alert('Error al eliminar la marca');
+                }
+            } catch (error) {
+                alert('Error al eliminar la marca');
+            }
+        }
+
+        // Load brands on page load
+        loadBrands();
+    </script>
+</body>
+</html>

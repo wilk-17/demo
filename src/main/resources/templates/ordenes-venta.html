@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Órdenes de Venta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ordenes-venta">Órdenes de Venta</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-cart-check text-success"></i> Gestión de Órdenes de Venta</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#orderModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Orden
+                    </button>
+                    <button class="btn btn-success" onclick="loadOrders()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Estado:</label>
+                        <select class="form-select" id="statusFilter" onchange="filterOrders()">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="procesando">Procesando</option>
+                            <option value="completado">Completado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">Buscar Cliente:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre de cliente..." onkeyup="searchOrders()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalOrders" class="text-warning">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-success">
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Empleado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Orden -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Orden de Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="orderForm">
+                        <input type="hidden" id="orderId">
+                        <div class="mb-3">
+                            <label for="customerName" class="form-label">Nombre del Cliente *</label>
+                            <input type="text" class="form-control" id="customerName" maxlength="100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="orderDate" class="form-label">Fecha de Orden *</label>
+                            <input type="date" class="form-control" id="orderDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="total" class="form-label">Total *</label>
+                            <input type="number" class="form-control" id="total" step="0.01" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Estado *</label>
+                            <select class="form-select" id="status" required>
+                                <option value="">Seleccione...</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="procesando">Procesando</option>
+                                <option value="completada">Completada</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employeeId" class="form-label">Empleado *</label>
+                            <select class="form-select" id="employeeId" required>
+                                <option value="">Seleccione un empleado...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveOrder()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentOrderId = null;
+        let employeesData = {};
+        let allOrders = [];
+
+        async function loadOrders() {
+            try {
+                const [ordersRes, employeesRes] = await Promise.all([
+                    fetch('/sales-order'),
+                    fetch('/employee')
+                ]);
+                
+                allOrders = await ordersRes.json();
+                const employees = await employeesRes.json();
+                
+                // Create lookup map
+                employees.forEach(emp => employeesData[emp.id] = emp);
+                
+                // Populate employee selector
+                const employeeSelector = document.getElementById('employeeId');
+                employeeSelector.innerHTML = '<option value="">Seleccione un empleado...</option>';
+                employees.forEach(emp => {
+                    employeeSelector.innerHTML += `<option value="${emp.id}">${emp.firstName} ${emp.lastName}</option>`;
+                });
+
+                displayOrders(allOrders);
+            } catch (error) {
+                console.error('Error al cargar órdenes:', error);
+                document.getElementById('ordersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron órdenes de venta
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalOrders').textContent = '0';
+                return;
+            }
+
+            orders.forEach(order => {
+                const employee = employeesData[order.employeeId] || {};
+                const statusBadge = {
+                    'pendiente': 'warning',
+                    'procesando': 'info',
+                    'completada': 'success',
+                    'cancelada': 'danger'
+                }[order.status] || 'secondary';
+                
+                const row = `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td><i class="bi bi-person"></i> ${order.customerName}</td>
+                        <td>${order.orderDate}</td>
+                        <td><strong>$${parseFloat(order.total).toFixed(2)}</strong></td>
+                        <td><span class="badge bg-${statusBadge}">${order.status}</span></td>
+                        <td>${employee.firstName || 'N/A'} ${employee.lastName || ''}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editOrder(${order.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteOrder(${order.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            document.getElementById('totalOrders').textContent = orders.length;
+        }
+
+        function filterOrders() {
+            const status = document.getElementById('statusFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allOrders;
+
+            if (status) {
+                filtered = filtered.filter(order => order.status === status);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(order => 
+                    order.customerName.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            displayOrders(filtered);
+        }
+
+        function searchOrders() {
+            filterOrders();
+        }
+
+        function openCreateModal() {
+            currentOrderId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Orden de Venta';
+            document.getElementById('orderForm').reset();
+            // Set today's date as default
+            document.getElementById('orderDate').valueAsDate = new Date();
+        }
+
+        async function editOrder(id) {
+            try {
+                const response = await fetch(`/sales-order/${id}`);
+                const order = await response.json();
+                
+                currentOrderId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Orden de Venta';
+                document.getElementById('customerName').value = order.customerName;
+                document.getElementById('orderDate').value = order.orderDate;
+                document.getElementById('total').value = order.total;
+                document.getElementById('status').value = order.status;
+                document.getElementById('employeeId').value = order.employeeId;
+                
+                new bootstrap.Modal(document.getElementById('orderModal')).show();
+            } catch (error) {
+                alert('Error al cargar la orden');
+            }
+        }
+
+        async function saveOrder() {
+            const customerName = document.getElementById('customerName').value;
+            const orderDate = document.getElementById('orderDate').value;
+            const total = parseFloat(document.getElementById('total').value);
+            const status = document.getElementById('status').value;
+            const employeeId = parseInt(document.getElementById('employeeId').value);
+
+            if (!customerName || !orderDate || isNaN(total) || !status || !employeeId) {
+                alert('Todos los campos son requeridos');
+                return;
+            }
+
+            const orderData = { 
+                customerName,
+                orderDate,
+                total,
+                status,
+                employeeId
+            };
+            
+            try {
+                let response;
+                if (currentOrderId) {
+                    response = await fetch(`/sales-order/${currentOrderId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                } else {
+                    response = await fetch('/sales-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+                    loadOrders();
+                    alert(currentOrderId ? 'Orden actualizada exitosamente' : 'Orden creada exitosamente');
+                } else {
+                    alert('Error al guardar la orden');
+                }
+            } catch (error) {
+                alert('Error al guardar la orden');
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('¿Está seguro de eliminar esta orden de venta?')) return;
+
+            try {
+                const response = await fetch(`/sales-order/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadOrders();
+                    alert('Orden eliminada exitosamente');
+                } else {
+                    alert('Error al eliminar la orden');
+                }
+            } catch (error) {
+                alert('Error al eliminar la orden');
+            }
+        }
+
+        // Load orders on page load
+        loadOrders();
+    </script>
+</body>
+</html>

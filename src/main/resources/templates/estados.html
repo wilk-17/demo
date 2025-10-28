@@ -22,6 +22,11 @@
             padding: 2rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
         .state-card {
             transition: transform 0.3s ease;
             cursor: pointer;
@@ -63,9 +68,27 @@
         <div class="table-container">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="bi bi-map-fill text-success"></i> Gestión de Estados</h2>
-                <button class="btn btn-success" onclick="loadStates()">
-                    <i class="bi bi-arrow-clockwise"></i> Actualizar
-                </button>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#stateModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Estado
+                    </button>
+                    <button class="btn btn-primary" onclick="loadStates()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o código..." onkeyup="searchStates()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalStates" class="text-success">0</h4>
+                    </div>
+                </div>
             </div>
 
             <div class="row mb-4" id="stateCards">
@@ -83,7 +106,7 @@
                             <th>ID</th>
                             <th>Código</th>
                             <th>Nombre del Estado</th>
-                            <th>Ciudades</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="statesTableBody">
@@ -94,8 +117,42 @@
         </div>
     </div>
 
+    <!-- Modal para Crear/Editar Estado -->
+    <div class="modal fade" id="stateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Estado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="stateForm">
+                        <input type="hidden" id="stateId">
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="description" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="code" class="form-label">Código *</label>
+                            <input type="text" class="form-control" id="code" maxlength="20" required>
+                            <small class="text-muted">Ejemplo: ANT, BOG, CUN</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveState()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let currentStateId = null;
+        let allStates = [];
+        let citiesPerState = {};
+
         async function loadStates() {
             try {
                 const [statesResponse, citiesResponse] = await Promise.all([
@@ -103,33 +160,66 @@
                     fetch('/city')
                 ]);
                 
-                const states = await statesResponse.json();
+                allStates = await statesResponse.json();
                 const cities = await citiesResponse.json();
                 
                 // Count cities per state
-                const citiesPerState = {};
+                citiesPerState = {};
                 cities.forEach(city => {
                     citiesPerState[city.stateId] = (citiesPerState[city.stateId] || 0) + 1;
                 });
 
-                const tbody = document.getElementById('statesTableBody');
-                tbody.innerHTML = '';
+                displayStates(allStates);
+            } catch (error) {
+                console.error('Error al cargar estados:', error);
+                document.getElementById('statesTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
 
-                const cardsContainer = document.getElementById('stateCards');
-                cardsContainer.innerHTML = '';
+        function displayStates(states) {
+            const tbody = document.getElementById('statesTableBody');
+            tbody.innerHTML = '';
 
-                states.forEach((state, index) => {
+            const cardsContainer = document.getElementById('stateCards');
+            cardsContainer.innerHTML = '';
+
+            if (states.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron estados
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalStates').textContent = '0';
+                return;
+            }
+
+            states.forEach((state, index) => {
                     const cityCount = citiesPerState[state.id] || 0;
                     const colors = ['primary', 'success', 'danger', 'warning', 'info'];
                     const color = colors[index % colors.length];
                     
-                    // Table row
+                    // Table row with action buttons
                     const row = `
                         <tr>
                             <td><strong>${state.id}</strong></td>
                             <td><span class="badge bg-${color}">${state.code}</span></td>
                             <td><i class="bi bi-geo-alt"></i> ${state.description}</td>
-                            <td><span class="badge bg-secondary">${cityCount} ciudades</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editState(${state.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteState(${state.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
                         </tr>
                     `;
                     tbody.innerHTML += row;
@@ -150,15 +240,98 @@
                         cardsContainer.innerHTML += card;
                     }
                 });
+                
+                document.getElementById('totalStates').textContent = states.length;
+        }
+
+        function searchStates() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayStates(allStates);
+            } else {
+                const filtered = allStates.filter(state => 
+                    state.description.toLowerCase().includes(searchTerm) ||
+                    state.code.toLowerCase().includes(searchTerm)
+                );
+                displayStates(filtered);
+            }
+        }
+
+        function openCreateModal() {
+            currentStateId = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Estado';
+            document.getElementById('stateForm').reset();
+        }
+
+        async function editState(id) {
+            try {
+                const response = await fetch(`/state/${id}`);
+                const state = await response.json();
+                
+                currentStateId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Estado';
+                document.getElementById('description').value = state.description;
+                document.getElementById('code').value = state.code;
+                
+                new bootstrap.Modal(document.getElementById('stateModal')).show();
             } catch (error) {
-                console.error('Error al cargar estados:', error);
-                document.getElementById('statesTableBody').innerHTML = `
-                    <tr>
-                        <td colspan="4" class="text-center text-danger">
-                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
-                        </td>
-                    </tr>
-                `;
+                alert('Error al cargar el estado');
+            }
+        }
+
+        async function saveState() {
+            const description = document.getElementById('description').value;
+            const code = document.getElementById('code').value.toUpperCase();
+
+            if (!description || !code) {
+                alert('Todos los campos son requeridos');
+                return;
+            }
+
+            const stateData = { description, code };
+            
+            try {
+                let response;
+                if (currentStateId) {
+                    response = await fetch(`/state/${currentStateId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(stateData)
+                    });
+                } else {
+                    response = await fetch('/state', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(stateData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('stateModal')).hide();
+                    loadStates();
+                    alert(currentStateId ? 'Estado actualizado exitosamente' : 'Estado creado exitosamente');
+                } else {
+                    alert('Error al guardar el estado');
+                }
+            } catch (error) {
+                alert('Error al guardar el estado');
+            }
+        }
+
+        async function deleteState(id) {
+            if (!confirm('¿Está seguro de eliminar este estado? Esto puede afectar las ciudades asociadas.')) return;
+
+            try {
+                const response = await fetch(`/state/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadStates();
+                    alert('Estado eliminado exitosamente');
+                } else {
+                    alert('Error al eliminar el estado. Puede tener ciudades asociadas.');
+                }
+            } catch (error) {
+                alert('Error al eliminar el estado');
             }
         }
 

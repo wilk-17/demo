@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items de Factura - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1400px;
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0"><i class="bi bi-receipt text-success"></i> Items de Factura</h1>
+                    <p class="text-muted">Gestión de artículos en facturas</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#itemModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Item
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Factura:</label>
+                        <select class="form-select" id="invoiceFilter" onchange="filterItems()">
+                            <option value="">Todas las facturas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Artículo:</label>
+                        <select class="form-select" id="itemFilter" onchange="filterItems()">
+                            <option value="">Todos los artículos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalItems" class="text-success">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-success">
+                        <tr>
+                            <th>ID</th>
+                            <th>Factura</th>
+                            <th>Cliente</th>
+                            <th>Artículo</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar -->
+    <div class="modal fade" id="itemModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Item de Factura</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="itemForm">
+                        <div class="mb-3">
+                            <label for="invoiceId" class="form-label">Factura *</label>
+                            <select class="form-select" id="invoiceId" required>
+                                <option value="">Seleccione una factura...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="itemId" class="form-label">Artículo *</label>
+                            <select class="form-select" id="itemId" required onchange="updatePrice()">
+                                <option value="">Seleccione un artículo...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Cantidad *</label>
+                            <input type="number" class="form-control" id="quantity" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Precio Unitario *</label>
+                            <input type="number" class="form-control" id="price" step="0.01" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveItem()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentItemId = null;
+        let invoicesData = {};
+        let inventoryData = {};
+        let allInvoiceItems = [];
+
+        async function loadItems() {
+            try {
+                const [itemsRes, invoicesRes, inventoryRes] = await Promise.all([
+                    fetch('/invoice-item'),
+                    fetch('/invoice'),
+                    fetch('/inventory-item')
+                ]);
+                
+                allInvoiceItems = await itemsRes.json();
+                const invoices = await invoicesRes.json();
+                const inventory = await inventoryRes.json();
+                
+                // Create lookup maps
+                invoices.forEach(invoice => invoicesData[invoice.id] = invoice);
+                inventory.forEach(item => inventoryData[item.id] = item);
+                
+                // Populate invoice selector in form
+                const invoiceSelector = document.getElementById('invoiceId');
+                invoiceSelector.innerHTML = '<option value="">Seleccione una factura...</option>';
+                invoices.forEach(invoice => {
+                    invoiceSelector.innerHTML += `<option value="${invoice.id}">Factura #${invoice.id} - ${invoice.customerName}</option>`;
+                });
+                
+                // Populate inventory selector in form
+                const itemSelector = document.getElementById('itemId');
+                itemSelector.innerHTML = '<option value="">Seleccione un artículo...</option>';
+                inventory.forEach(item => {
+                    itemSelector.innerHTML += `<option value="${item.id}" data-price="${item.price}">${item.name} ($${parseFloat(item.price).toFixed(2)})</option>`;
+                });
+
+                // Populate filter dropdowns
+                const invoiceFilter = document.getElementById('invoiceFilter');
+                invoiceFilter.innerHTML = '<option value="">Todas las facturas</option>';
+                invoices.forEach(invoice => {
+                    invoiceFilter.innerHTML += `<option value="${invoice.id}">Factura #${invoice.id} - ${invoice.customerName}</option>`;
+                });
+
+                const itemFilter = document.getElementById('itemFilter');
+                itemFilter.innerHTML = '<option value="">Todos los artículos</option>';
+                inventory.forEach(item => {
+                    itemFilter.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                });
+
+                displayItems(allInvoiceItems);
+            } catch (error) {
+                console.error('Error al cargar items:', error);
+                document.getElementById('itemsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayItems(items) {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron items de factura
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalItems').textContent = '0';
+                return;
+            }
+
+            items.forEach(item => {
+                const invoice = invoicesData[item.invoiceId] || {};
+                const inventoryItem = inventoryData[item.itemId] || {};
+                const subtotal = item.quantity * parseFloat(item.price);
+                
+                const row = `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td><span class="badge bg-success">Factura #${item.invoiceId}</span></td>
+                        <td>${invoice.customerName || 'N/A'}</td>
+                        <td><i class="bi bi-box"></i> ${inventoryItem.name || 'N/A'}</td>
+                        <td><span class="badge bg-primary">${item.quantity}</span></td>
+                        <td>$${parseFloat(item.price).toFixed(2)}</td>
+                        <td><strong>$${subtotal.toFixed(2)}</strong></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            document.getElementById('totalItems').textContent = items.length;
+        }
+
+        function filterItems() {
+            const invoiceId = document.getElementById('invoiceFilter').value;
+            const itemId = document.getElementById('itemFilter').value;
+
+            let filtered = allInvoiceItems;
+
+            if (invoiceId) {
+                filtered = filtered.filter(item => item.invoiceId == invoiceId);
+            }
+
+            if (itemId) {
+                filtered = filtered.filter(item => item.itemId == itemId);
+            }
+
+            displayItems(filtered);
+        }
+
+        function updatePrice() {
+            const select = document.getElementById('itemId');
+            const selectedOption = select.options[select.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            
+            if (price) {
+                document.getElementById('price').value = parseFloat(price).toFixed(2);
+            }
+        }
+
+        function openCreateModal() {
+            currentItemId = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Item de Factura';
+            document.getElementById('itemForm').reset();
+        }
+
+        async function editItem(id) {
+            try {
+                const response = await fetch(`/invoice-item/${id}`);
+                const item = await response.json();
+                
+                currentItemId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Item de Factura';
+                document.getElementById('invoiceId').value = item.invoiceId;
+                document.getElementById('itemId').value = item.itemId;
+                document.getElementById('quantity').value = item.quantity;
+                document.getElementById('price').value = parseFloat(item.price).toFixed(2);
+                
+                new bootstrap.Modal(document.getElementById('itemModal')).show();
+            } catch (error) {
+                console.error('Error al cargar item:', error);
+                alert('Error al cargar el item');
+            }
+        }
+
+        async function saveItem() {
+            const form = document.getElementById('itemForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const itemData = {
+                invoiceId: parseInt(document.getElementById('invoiceId').value),
+                itemId: parseInt(document.getElementById('itemId').value),
+                quantity: parseInt(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value)
+            };
+
+            try {
+                const url = currentItemId ? `/invoice-item/${currentItemId}` : '/invoice-item';
+                const method = currentItemId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(itemData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
+                    loadItems();
+                } else {
+                    alert('Error al guardar el item');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar el item');
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('¿Está seguro de eliminar este item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/invoice-item/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadItems();
+                } else {
+                    alert('Error al eliminar el item');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar el item');
+            }
+        }
+
+        // Cargar datos al iniciar
+        window.onload = loadItems;
+    </script>
+</body>
+</html>

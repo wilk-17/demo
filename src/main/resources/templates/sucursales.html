@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Sucursales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/sucursales">Sucursales</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-building text-warning"></i> Gestión de Sucursales</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Sucursal
+                    </button>
+                    <button class="btn btn-warning" onclick="loadBranches()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por organización o ciudad..." onkeyup="searchBranches()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalBranches" class="text-warning">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-warning">
+                        <tr>
+                            <th>ID</th>
+                            <th>Organización</th>
+                            <th>Ciudad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="branchesTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Sucursal -->
+    <div class="modal fade" id="branchModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Sucursal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="branchForm">
+                        <input type="hidden" id="branchId">
+                        <div class="mb-3">
+                            <label for="organizationId" class="form-label">Organización *</label>
+                            <select class="form-select" id="organizationId" required>
+                                <option value="">Seleccione una organización...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stateId" class="form-label">Estado *</label>
+                            <select class="form-select" id="stateId" onchange="loadCitiesByState()" required>
+                                <option value="">Seleccione un estado...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cityId" class="form-label">Ciudad *</label>
+                            <select class="form-select" id="cityId" required>
+                                <option value="">Primero seleccione un estado...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="saveBranch()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentBranchId = null;
+        let organizationsData = {};
+        let citiesData = {};
+        let statesData = {};
+        let allCities = [];
+        let allBranches = [];
+
+        async function loadBranches() {
+            try {
+                const [branchesRes, orgsRes, citiesRes, statesRes] = await Promise.all([
+                    fetch('/branch'),
+                    fetch('/api/organizations'),
+                    fetch('/city'),
+                    fetch('/state')
+                ]);
+                
+                allBranches = await branchesRes.json();
+                const organizations = await orgsRes.json();
+                allCities = await citiesRes.json();
+                const states = await statesRes.json();
+                
+                // Create lookup maps
+                organizations.forEach(org => organizationsData[org.id] = org);
+                allCities.forEach(city => citiesData[city.id] = city);
+                states.forEach(state => statesData[state.id] = state);
+                
+                // Populate organization selector
+                const orgSelector = document.getElementById('organizationId');
+                orgSelector.innerHTML = '<option value="">Seleccione una organización...</option>';
+                organizations.forEach(org => {
+                    orgSelector.innerHTML += `<option value="${org.id}">${org.currentName || org.historicalName}</option>`;
+                });
+
+                // Populate state selector
+                const stateSelector = document.getElementById('stateId');
+                stateSelector.innerHTML = '<option value="">Seleccione un estado...</option>';
+                states.forEach(state => {
+                    stateSelector.innerHTML += `<option value="${state.id}">${state.description}</option>`;
+                });
+
+                displayBranches(allBranches);
+            } catch (error) {
+                console.error('Error al cargar sucursales:', error);
+                document.getElementById('branchesTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayBranches(branches) {
+            const tbody = document.getElementById('branchesTableBody');
+            tbody.innerHTML = '';
+
+            if (branches.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron sucursales
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalBranches').textContent = '0';
+                return;
+            }
+
+            branches.forEach(branch => {
+                const org = organizationsData[branch.organizationId] || {};
+                const city = citiesData[branch.cityId] || {};
+                const state = statesData[city.stateId] || {};
+                
+                const row = `
+                    <tr>
+                        <td><strong>${branch.id}</strong></td>
+                        <td><i class="bi bi-briefcase"></i> ${org.currentName || org.historicalName || 'N/A'}</td>
+                        <td><i class="bi bi-geo-alt"></i> ${city.description || 'N/A'}</td>
+                        <td><span class="badge bg-info">${state.description || 'N/A'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editBranch(${branch.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBranch(${branch.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            document.getElementById('totalBranches').textContent = branches.length;
+        }
+
+        function searchBranches() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayBranches(allBranches);
+            } else {
+                const filtered = allBranches.filter(branch => {
+                    const org = organizationsData[branch.organizationId] || {};
+                    const city = citiesData[branch.cityId] || {};
+                    return (org.currentName && org.currentName.toLowerCase().includes(searchTerm)) ||
+                           (org.historicalName && org.historicalName.toLowerCase().includes(searchTerm)) ||
+                           (city.description && city.description.toLowerCase().includes(searchTerm));
+                });
+                displayBranches(filtered);
+            }
+        }
+
+        function loadCitiesByState() {
+            const stateId = parseInt(document.getElementById('stateId').value);
+            const citySelector = document.getElementById('cityId');
+            
+            if (!stateId) {
+                citySelector.innerHTML = '<option value="">Primero seleccione un estado...</option>';
+                return;
+            }
+
+            const filteredCities = allCities.filter(city => city.stateId === stateId);
+            citySelector.innerHTML = '<option value="">Seleccione una ciudad...</option>';
+            filteredCities.forEach(city => {
+                citySelector.innerHTML += `<option value="${city.id}">${city.description}</option>`;
+            });
+        }
+
+        function openCreateModal() {
+            currentBranchId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Sucursal';
+            document.getElementById('branchForm').reset();
+            document.getElementById('cityId').innerHTML = '<option value="">Primero seleccione un estado...</option>';
+        }
+
+        async function editBranch(id) {
+            try {
+                const response = await fetch(`/branch/${id}`);
+                const branch = await response.json();
+                
+                currentBranchId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Sucursal';
+                document.getElementById('organizationId').value = branch.organizationId;
+                
+                // Load city's state first
+                const city = citiesData[branch.cityId];
+                if (city) {
+                    document.getElementById('stateId').value = city.stateId;
+                    loadCitiesByState();
+                    setTimeout(() => {
+                        document.getElementById('cityId').value = branch.cityId;
+                    }, 100);
+                }
+                
+                new bootstrap.Modal(document.getElementById('branchModal')).show();
+            } catch (error) {
+                alert('Error al cargar la sucursal');
+            }
+        }
+
+        async function saveBranch() {
+            const organizationId = parseInt(document.getElementById('organizationId').value);
+            const cityId = parseInt(document.getElementById('cityId').value);
+
+            if (!organizationId || !cityId) {
+                alert('Todos los campos son requeridos');
+                return;
+            }
+
+            const branchData = { organizationId, cityId };
+            
+            try {
+                let response;
+                if (currentBranchId) {
+                    response = await fetch(`/branch/${currentBranchId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(branchData)
+                    });
+                } else {
+                    response = await fetch('/branch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(branchData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('branchModal')).hide();
+                    loadBranches();
+                    alert(currentBranchId ? 'Sucursal actualizada exitosamente' : 'Sucursal creada exitosamente');
+                } else {
+                    alert('Error al guardar la sucursal');
+                }
+            } catch (error) {
+                alert('Error al guardar la sucursal');
+            }
+        }
+
+        async function deleteBranch(id) {
+            if (!confirm('¿Está seguro de eliminar esta sucursal?')) return;
+
+            try {
+                const response = await fetch(`/branch/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadBranches();
+                    alert('Sucursal eliminada exitosamente');
+                } else {
+                    alert('Error al eliminar la sucursal');
+                }
+            } catch (error) {
+                alert('Error al eliminar la sucursal');
+            }
+        }
+
+        // Load branches on page load
+        loadBranches();
+    </script>
+</body>
+</html>

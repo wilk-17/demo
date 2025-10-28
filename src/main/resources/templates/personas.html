@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Personas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/personas">Personas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-people-fill text-info"></i> Gestión de Personas</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#personModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Persona
+                    </button>
+                    <button class="btn btn-info" onclick="loadPersons()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por DNI o nombre..." onkeyup="searchPersons()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalPersons" class="text-info">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-info">
+                        <tr>
+                            <th>ID</th>
+                            <th>DNI</th>
+                            <th>Nombre Completo</th>
+                            <th>Teléfono</th>
+                            <th>Ciudad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Persona -->
+    <div class="modal fade" id="personModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Persona</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personForm">
+                        <input type="hidden" id="personId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="dni" class="form-label">DNI *</label>
+                                <input type="text" class="form-control" id="dni" maxlength="20" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="phone" maxlength="20">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="firstName" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="lastName" maxlength="100" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Dirección</label>
+                            <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cityId" class="form-label">Ciudad *</label>
+                            <select class="form-select" id="cityId" required>
+                                <option value="">Seleccione una ciudad...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" onclick="savePerson()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPersonId = null;
+        let citiesData = {};
+        let allPersons = [];
+
+        async function loadPersons() {
+            try {
+                const [personsRes, citiesRes] = await Promise.all([
+                    fetch('/person'),
+                    fetch('/city')
+                ]);
+                
+                allPersons = await personsRes.json();
+                const cities = await citiesRes.json();
+                
+                // Create lookup map
+                cities.forEach(city => citiesData[city.id] = city);
+                
+                // Populate city selector
+                const citySelector = document.getElementById('cityId');
+                citySelector.innerHTML = '<option value="">Seleccione una ciudad...</option>';
+                cities.forEach(city => {
+                    citySelector.innerHTML += `<option value="${city.id}">${city.description}</option>`;
+                });
+
+                displayPersons(allPersons);
+            } catch (error) {
+                console.error('Error al cargar personas:', error);
+                document.getElementById('personsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayPersons(persons) {
+            const tbody = document.getElementById('personsTableBody');
+            tbody.innerHTML = '';
+
+            if (persons.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron personas
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalPersons').textContent = '0';
+                return;
+            }
+
+            persons.forEach(person => {
+                    const city = citiesData[person.cityId] || {};
+                    
+                    const row = `
+                        <tr>
+                            <td><strong>${person.id}</strong></td>
+                            <td><span class="badge bg-dark">${person.dni}</span></td>
+                            <td><i class="bi bi-person"></i> ${person.firstName} ${person.lastName}</td>
+                            <td>${person.phone || '<span class="text-muted">N/A</span>'}</td>
+                            <td><span class="badge bg-secondary">${city.description || 'N/A'}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editPerson(${person.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePerson(${person.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+                
+                document.getElementById('totalPersons').textContent = persons.length;
+        }
+
+        function searchPersons() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayPersons(allPersons);
+            } else {
+                const filtered = allPersons.filter(person => 
+                    person.dni.toLowerCase().includes(searchTerm) ||
+                    person.firstName.toLowerCase().includes(searchTerm) ||
+                    person.lastName.toLowerCase().includes(searchTerm)
+                );
+                displayPersons(filtered);
+            }
+        }
+
+        function openCreateModal() {
+            currentPersonId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva Persona';
+            document.getElementById('personForm').reset();
+        }
+
+        async function editPerson(id) {
+            try {
+                const response = await fetch(`/person/${id}`);
+                const person = await response.json();
+                
+                currentPersonId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Persona';
+                document.getElementById('dni').value = person.dni;
+                document.getElementById('firstName').value = person.firstName;
+                document.getElementById('lastName').value = person.lastName;
+                document.getElementById('address').value = person.address || '';
+                document.getElementById('phone').value = person.phone || '';
+                document.getElementById('cityId').value = person.cityId;
+                
+                new bootstrap.Modal(document.getElementById('personModal')).show();
+            } catch (error) {
+                alert('Error al cargar la persona');
+            }
+        }
+
+        async function savePerson() {
+            const dni = document.getElementById('dni').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const address = document.getElementById('address').value;
+            const phone = document.getElementById('phone').value;
+            const cityId = parseInt(document.getElementById('cityId').value);
+
+            if (!dni || !firstName || !lastName || !cityId) {
+                alert('Los campos DNI, Nombre, Apellido y Ciudad son requeridos');
+                return;
+            }
+
+            const personData = { 
+                dni, 
+                firstName, 
+                lastName, 
+                address: address || null,
+                phone: phone || null,
+                cityId 
+            };
+            
+            try {
+                let response;
+                if (currentPersonId) {
+                    response = await fetch(`/person/${currentPersonId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(personData)
+                    });
+                } else {
+                    response = await fetch('/person', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(personData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('personModal')).hide();
+                    loadPersons();
+                    alert(currentPersonId ? 'Persona actualizada exitosamente' : 'Persona creada exitosamente');
+                } else {
+                    alert('Error al guardar la persona');
+                }
+            } catch (error) {
+                alert('Error al guardar la persona');
+            }
+        }
+
+        async function deletePerson(id) {
+            if (!confirm('¿Está seguro de eliminar esta persona?')) return;
+
+            try {
+                const response = await fetch(`/person/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadPersons();
+                    alert('Persona eliminada exitosamente');
+                } else {
+                    alert('Error al eliminar la persona');
+                }
+            } catch (error) {
+                alert('Error al eliminar la persona');
+            }
+        }
+
+        // Load persons on page load
+        loadPersons();
+    </script>
+</body>
+</html>

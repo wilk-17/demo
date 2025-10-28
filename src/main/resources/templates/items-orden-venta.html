@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Items de Orden de Venta - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0"><i class="bi bi-cart-plus text-primary"></i> Items de Orden de Venta</h1>
+                    <p class="text-muted">Gestión de artículos en órdenes de venta</p>
+                </div>
+                <div>
+                    <a href="/" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#itemModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Item
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Orden de Venta:</label>
+                        <select class="form-select" id="orderFilter" onchange="filterItems()">
+                            <option value="">Todas las órdenes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Artículo:</label>
+                        <select class="form-select" id="itemFilter" onchange="filterItems()">
+                            <option value="">Todos los artículos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalItems" class="text-warning">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Orden de Venta</th>
+                            <th>Cliente</th>
+                            <th>Artículo</th>
+                            <th>Cantidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar -->
+    <div class="modal fade" id="itemModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Item de Orden</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="itemForm">
+                        <div class="mb-3">
+                            <label for="salesOrderId" class="form-label">Orden de Venta *</label>
+                            <select class="form-select" id="salesOrderId" required>
+                                <option value="">Seleccione una orden...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="itemId" class="form-label">Artículo *</label>
+                            <select class="form-select" id="itemId" required>
+                                <option value="">Seleccione un artículo...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Cantidad *</label>
+                            <input type="number" class="form-control" id="quantity" min="1" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveItem()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentItemId = null;
+        let ordersData = {};
+        let inventoryData = {};
+        let allSalesOrderItems = [];
+
+        async function loadItems() {
+            try {
+                const [itemsRes, ordersRes, inventoryRes] = await Promise.all([
+                    fetch('/sales-order-item'),
+                    fetch('/sales-order'),
+                    fetch('/inventory-item')
+                ]);
+                
+                allSalesOrderItems = await itemsRes.json();
+                const orders = await ordersRes.json();
+                const inventory = await inventoryRes.json();
+                
+                // Create lookup maps
+                orders.forEach(order => ordersData[order.id] = order);
+                inventory.forEach(item => inventoryData[item.id] = item);
+                
+                // Populate order selector in form
+                const orderSelector = document.getElementById('salesOrderId');
+                orderSelector.innerHTML = '<option value="">Seleccione una orden...</option>';
+                orders.forEach(order => {
+                    orderSelector.innerHTML += `<option value="${order.id}">Orden #${order.id} - ${order.customerName}</option>`;
+                });
+                
+                // Populate inventory selector in form
+                const itemSelector = document.getElementById('itemId');
+                itemSelector.innerHTML = '<option value="">Seleccione un artículo...</option>';
+                inventory.forEach(item => {
+                    itemSelector.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.quantity})</option>`;
+                });
+
+                // Populate filter dropdowns
+                const orderFilter = document.getElementById('orderFilter');
+                orderFilter.innerHTML = '<option value="">Todas las órdenes</option>';
+                orders.forEach(order => {
+                    orderFilter.innerHTML += `<option value="${order.id}">Orden #${order.id} - ${order.customerName}</option>`;
+                });
+
+                const itemFilter = document.getElementById('itemFilter');
+                itemFilter.innerHTML = '<option value="">Todos los artículos</option>';
+                inventory.forEach(item => {
+                    itemFilter.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                });
+
+                displayItems(allSalesOrderItems);
+            } catch (error) {
+                console.error('Error al cargar items:', error);
+                document.getElementById('itemsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayItems(items) {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron items de orden de venta
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalItems').textContent = '0';
+                return;
+            }
+
+            items.forEach(item => {
+                const order = ordersData[item.salesOrderId] || {};
+                const inventoryItem = inventoryData[item.itemId] || {};
+                
+                const row = `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td><span class="badge bg-info">Orden #${item.salesOrderId}</span></td>
+                        <td>${order.customerName || 'N/A'}</td>
+                        <td><i class="bi bi-box"></i> ${inventoryItem.name || 'N/A'}</td>
+                        <td><span class="badge bg-success">${item.quantity}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            document.getElementById('totalItems').textContent = items.length;
+        }
+
+        function filterItems() {
+            const orderId = document.getElementById('orderFilter').value;
+            const itemId = document.getElementById('itemFilter').value;
+
+            let filtered = allSalesOrderItems;
+
+            if (orderId) {
+                filtered = filtered.filter(item => item.salesOrderId == orderId);
+            }
+
+            if (itemId) {
+                filtered = filtered.filter(item => item.itemId == itemId);
+            }
+
+            displayItems(filtered);
+        }
+
+        function openCreateModal() {
+            currentItemId = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Item de Orden';
+            document.getElementById('itemForm').reset();
+        }
+
+        async function editItem(id) {
+            try {
+                const response = await fetch(`/sales-order-item/${id}`);
+                const item = await response.json();
+                
+                currentItemId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Item de Orden';
+                document.getElementById('salesOrderId').value = item.salesOrderId;
+                document.getElementById('itemId').value = item.itemId;
+                document.getElementById('quantity').value = item.quantity;
+                
+                new bootstrap.Modal(document.getElementById('itemModal')).show();
+            } catch (error) {
+                console.error('Error al cargar item:', error);
+                alert('Error al cargar el item');
+            }
+        }
+
+        async function saveItem() {
+            const form = document.getElementById('itemForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const itemData = {
+                salesOrderId: parseInt(document.getElementById('salesOrderId').value),
+                itemId: parseInt(document.getElementById('itemId').value),
+                quantity: parseInt(document.getElementById('quantity').value)
+            };
+
+            try {
+                const url = currentItemId ? `/sales-order-item/${currentItemId}` : '/sales-order-item';
+                const method = currentItemId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(itemData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
+                    loadItems();
+                } else {
+                    alert('Error al guardar el item');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar el item');
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('¿Está seguro de eliminar este item?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/sales-order-item/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadItems();
+                } else {
+                    alert('Error al eliminar el item');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar el item');
+            }
+        }
+
+        // Cargar datos al iniciar
+        window.onload = loadItems;
+    </script>
+</body>
+</html>

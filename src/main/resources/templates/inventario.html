@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/inventario">Inventario</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-box-seam text-danger"></i> Gestión de Inventario</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#itemModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Artículo
+                    </button>
+                    <button class="btn btn-danger" onclick="loadInventory()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Categoría:</label>
+                        <select class="form-select" id="categoryFilter" onchange="filterItems()">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Marca:</label>
+                        <select class="form-select" id="brandFilter" onchange="filterItems()">
+                            <option value="">Todas las marcas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Buscar:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre o descripción..." onkeyup="searchItems()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Total:</label>
+                        <h4 id="totalItems" class="text-warning">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-danger">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Categoría</th>
+                            <th>Marca</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="spinner-border text-danger" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Artículo -->
+    <div class="modal fade" id="itemModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nuevo Artículo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="itemForm">
+                        <input type="hidden" id="itemId">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="name" maxlength="100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="description" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity" class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="quantity" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">Precio *</label>
+                                <input type="number" class="form-control" id="price" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="categoryId" class="form-label">Categoría *</label>
+                                <select class="form-select" id="categoryId" required>
+                                    <option value="">Seleccione una categoría...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="brandId" class="form-label">Marca *</label>
+                                <select class="form-select" id="brandId" required>
+                                    <option value="">Seleccione una marca...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="saveItem()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentItemId = null;
+        let categoriesData = {};
+        let brandsData = {};
+        let allItems = [];
+
+        async function loadInventory() {
+            try {
+                const [itemsRes, categoriesRes, brandsRes] = await Promise.all([
+                    fetch('/inventory-item'),
+                    fetch('/item-category'),
+                    fetch('/brand')
+                ]);
+                
+                allItems = await itemsRes.json();
+                const categories = await categoriesRes.json();
+                const brands = await brandsRes.json();
+                
+                // Create lookup maps
+                categories.forEach(cat => categoriesData[cat.id] = cat);
+                brands.forEach(brand => brandsData[brand.id] = brand);
+                
+                // Populate category selector in form
+                const categorySelector = document.getElementById('categoryId');
+                categorySelector.innerHTML = '<option value="">Seleccione una categoría...</option>';
+                categories.forEach(cat => {
+                    categorySelector.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                });
+                
+                // Populate brand selector in form
+                const brandSelector = document.getElementById('brandId');
+                brandSelector.innerHTML = '<option value="">Seleccione una marca...</option>';
+                brands.forEach(brand => {
+                    brandSelector.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
+                });
+
+                // Populate filter dropdowns
+                const categoryFilter = document.getElementById('categoryFilter');
+                categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+                categories.forEach(cat => {
+                    categoryFilter.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                });
+
+                const brandFilter = document.getElementById('brandFilter');
+                brandFilter.innerHTML = '<option value="">Todas las marcas</option>';
+                brands.forEach(brand => {
+                    brandFilter.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
+                });
+
+                displayItems(allItems);
+            } catch (error) {
+                console.error('Error al cargar inventario:', error);
+                document.getElementById('itemsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayItems(items) {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            <i class="bi bi-inbox"></i> No se encontraron artículos
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('totalItems').textContent = '0';
+                return;
+            }
+
+            items.forEach(item => {
+                const category = categoriesData[item.categoryId] || {};
+                const brand = brandsData[item.brandId] || {};
+                const stockClass = item.quantity < 10 ? 'danger' : item.quantity < 50 ? 'warning' : 'success';
+                
+                const row = `
+                    <tr>
+                        <td><strong>${item.id}</strong></td>
+                        <td><i class="bi bi-box"></i> ${item.name}</td>
+                        <td>${item.description || '<span class="text-muted">Sin descripción</span>'}</td>
+                        <td><span class="badge bg-${stockClass}">${item.quantity}</span></td>
+                        <td>$${parseFloat(item.price).toFixed(2)}</td>
+                        <td><span class="badge bg-info">${category.name || 'N/A'}</span></td>
+                        <td><span class="badge bg-secondary">${brand.name || 'N/A'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            document.getElementById('totalItems').textContent = items.length;
+        }
+
+        function filterItems() {
+            const categoryId = document.getElementById('categoryFilter').value;
+            const brandId = document.getElementById('brandFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allItems;
+
+            if (categoryId) {
+                filtered = filtered.filter(item => item.categoryId == categoryId);
+            }
+
+            if (brandId) {
+                filtered = filtered.filter(item => item.brandId == brandId);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) ||
+                    (item.description && item.description.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            displayItems(filtered);
+        }
+
+        function searchItems() {
+            filterItems();
+        }
+
+        function openCreateModal() {
+            currentItemId = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Artículo';
+            document.getElementById('itemForm').reset();
+        }
+
+        async function editItem(id) {
+            try {
+                const response = await fetch(`/inventory-item/${id}`);
+                const item = await response.json();
+                
+                currentItemId = id;
+                document.getElementById('modalTitle').textContent = 'Editar Artículo';
+                document.getElementById('name').value = item.name;
+                document.getElementById('description').value = item.description || '';
+                document.getElementById('quantity').value = item.quantity;
+                document.getElementById('price').value = item.price;
+                document.getElementById('categoryId').value = item.categoryId;
+                document.getElementById('brandId').value = item.brandId;
+                
+                new bootstrap.Modal(document.getElementById('itemModal')).show();
+            } catch (error) {
+                alert('Error al cargar el artículo');
+            }
+        }
+
+        async function saveItem() {
+            const form = document.getElementById('itemForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const itemData = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value || null,
+                quantity: parseInt(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value),
+                categoryId: parseInt(document.getElementById('categoryId').value),
+                brandId: parseInt(document.getElementById('brandId').value)
+            };
+            
+            try {
+                let response;
+                if (currentItemId) {
+                    response = await fetch(`/inventory-item/${currentItemId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(itemData)
+                    });
+                } else {
+                    response = await fetch('/inventory-item', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(itemData)
+                    });
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
+                    loadInventory();
+                    alert(currentItemId ? 'Artículo actualizado exitosamente' : 'Artículo creado exitosamente');
+                } else {
+                    alert('Error al guardar el artículo');
+                }
+            } catch (error) {
+                alert('Error al guardar el artículo');
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('¿Está seguro de eliminar este artículo?')) return;
+
+            try {
+                const response = await fetch(`/inventory-item/${id}`, { method: 'DELETE' });
+                if (response.ok || response.status === 204) {
+                    loadInventory();
+                    alert('Artículo eliminado exitosamente');
+                } else {
+                    alert('Error al eliminar el artículo');
+                }
+            } catch (error) {
+                alert('Error al eliminar el artículo');
+            }
+        }
+
+        // Load items on page load
+        window.onload = loadInventory;
+    </script>
+</body>
+</html>
