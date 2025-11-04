@@ -8,6 +8,17 @@ public class ViewController {
 
     @GetMapping("/")
     public String home() {
+        // Redirigir al login - el frontend verificará el token
+        return "redirect:/login";
+    }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @GetMapping("/index")
+    public String index() {
         return "index";
     }
 

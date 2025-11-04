@@ -1,0 +1,676 @@
+{
+	"info": {
+		"name": "Sistema Gestión - Pruebas JWT",
+		"description": "Colección completa para probar el sistema de autenticación JWT",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Autenticación",
+			"item": [
+				{
+					"name": "1.1 Login - Usuario Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"    pm.environment.set(\"username\", jsonData.username);",
+									"    pm.environment.set(\"userId\", jsonData.id);",
+									"    console.log(\"Token guardado: \" + jsonData.token.substring(0, 20) + \"...\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login con usuario admin. Guarda automáticamente el token JWT."
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Login - Usuario Gerente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"    pm.environment.set(\"username\", jsonData.username);",
+									"    pm.environment.set(\"userId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"gerente1\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Obtener Usuario Actual",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Obtiene la información del usuario autenticado actualmente."
+					},
+					"response": []
+				},
+				{
+					"name": "1.4 Verificar Permiso Específico",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/check-permission/CREATE_USER",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"check-permission",
+								"CREATE_USER"
+							]
+						},
+						"description": "Verifica si el usuario actual tiene un permiso específico. Retorna true o false."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Panel Administrativo",
+			"item": [
+				{
+					"name": "2.1 Ver Logs de Auditoría",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/activity-logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"activity-logs"
+							]
+						},
+						"description": "Obtiene los últimos 100 logs de auditoría. Solo accesible por ADMINISTRADOR."
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Logs de Usuario Específico",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/activity-logs/user/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"activity-logs",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Obtiene todos los logs de auditoría de un usuario específico."
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Listar Todos los Permisos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/permissions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"permissions"
+							]
+						},
+						"description": "Lista todos los permisos disponibles en el sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "2.4 Permisos de un Rol",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/permissions/role/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"permissions",
+								"role",
+								"1"
+							]
+						},
+						"description": "Obtiene todos los permisos asignados a un rol específico."
+					},
+					"response": []
+				},
+				{
+					"name": "2.5 Asignar Permiso a Rol",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/permissions/assign?roleId=2&permissionId=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"permissions",
+								"assign"
+							],
+							"query": [
+								{
+									"key": "roleId",
+									"value": "2",
+									"description": "ID del rol"
+								},
+								{
+									"key": "permissionId",
+									"value": "5",
+									"description": "ID del permiso"
+								}
+							]
+						},
+						"description": "Asigna un permiso específico a un rol."
+					},
+					"response": []
+				},
+				{
+					"name": "2.6 Remover Permiso de Rol",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/permissions/remove?roleId=2&permissionId=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"permissions",
+								"remove"
+							],
+							"query": [
+								{
+									"key": "roleId",
+									"value": "2"
+								},
+								{
+									"key": "permissionId",
+									"value": "5"
+								}
+							]
+						},
+						"description": "Remueve un permiso de un rol."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Endpoints Protegidos (Ejemplos)",
+			"item": [
+				{
+					"name": "3.1 Listar Clientes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clientes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clientes"
+							]
+						},
+						"description": "Ejemplo de endpoint protegido - requiere autenticación."
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Listar Productos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/productos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"productos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Listar Pedidos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/pedidos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pedidos"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Gestión de Usuarios",
+			"item": [
+				{
+					"name": "4.1 Listar Usuarios",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Crear Usuario",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"usuario_prueba\",\n    \"password\": \"password123\",\n    \"roleId\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Crea un nuevo usuario. La contraseña se encripta automáticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "4.3 Actualizar Usuario",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"nuevaContraseña123\",\n    \"roleId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"1"
+							]
+						},
+						"description": "Actualiza un usuario. Si no envías password, no se modifica."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Pruebas de Seguridad",
+			"item": [
+				{
+					"name": "5.1 Acceso sin Token (debe fallar)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clientes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clientes"
+							]
+						},
+						"description": "Intenta acceder sin token - debe retornar 403 Forbidden"
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Token Inválido (debe fallar)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "token_invalido_123",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clientes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clientes"
+							]
+						},
+						"description": "Intenta acceder con token inválido - debe retornar 403 Forbidden"
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Admin sin permisos (debe fallar)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/activity-logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"activity-logs"
+							]
+						},
+						"description": "Primero haz login con un usuario NO admin (gerente1), luego ejecuta esto. Debe retornar 403."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "username",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		}
+	]
+}
