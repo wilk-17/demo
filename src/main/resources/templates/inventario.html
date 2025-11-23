@@ -178,17 +178,26 @@
         let brandsData = {};
         let allItems = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadInventory() {
             try {
-                const [itemsRes, categoriesRes, brandsRes] = await Promise.all([
-                    fetch('/inventory-item'),
-                    fetch('/item-category'),
-                    fetch('/brand')
+                const [itemsResponse, categoriesResponse, brandsResponse] = await Promise.all([
+                    fetch('/api/inventory-items', { headers: getAuthHeaders() }),
+                    fetch('/api/item-categories', { headers: getAuthHeaders() }),
+                    fetch('/api/brands', { headers: getAuthHeaders() })
                 ]);
                 
-                allItems = await itemsRes.json();
-                const categories = await categoriesRes.json();
-                const brands = await brandsRes.json();
+                allItems = await itemsResponse.json();
+                const categories = await categoriesResponse.json();
+                const brands = await brandsResponse.json();
                 
                 // Create lookup maps
                 categories.forEach(cat => categoriesData[cat.id] = cat);
@@ -317,7 +326,7 @@
 
         async function editItem(id) {
             try {
-                const response = await fetch(`/inventory-item/${id}`);
+                const response = await fetch(`/api/inventory-items/${id}`, { headers: getAuthHeaders() });
                 const item = await response.json();
                 
                 currentItemId = id;
@@ -354,15 +363,15 @@
             try {
                 let response;
                 if (currentItemId) {
-                    response = await fetch(`/inventory-item/${currentItemId}`, {
+                    response = await fetch(`/api/inventory-items/${currentItemId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(itemData)
                     });
                 } else {
-                    response = await fetch('/inventory-item', {
+                    response = await fetch('/api/inventory-items', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(itemData)
                     });
                 }
@@ -383,7 +392,7 @@
             if (!confirm('¿Está seguro de eliminar este artículo?')) return;
 
             try {
-                const response = await fetch(`/inventory-item/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/inventory-items/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadInventory();
                     alert('Artículo eliminado exitosamente');
@@ -398,5 +407,6 @@
         // Load items on page load
         window.onload = loadInventory;
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

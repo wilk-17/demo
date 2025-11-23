@@ -6,23 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/brand")
+@RequestMapping("/api/brands")
 public class BrandController {
 
     @Autowired
     private BrandRepository brandRepository;
 
+    @PreAuthorize("hasAuthority('READ_BRANDS')")
     @GetMapping
     public ResponseEntity<List<Brand>> getAllBrands() {
         List<Brand> brands = brandRepository.findAll();
         return ResponseEntity.ok(brands);
     }
 
+    @PreAuthorize("hasAuthority('READ_BRANDS')")
     @GetMapping("/{id}")
     public ResponseEntity<Brand> getBrandById(@PathVariable Long id) {
         Optional<Brand> brand = brandRepository.findById(id);
@@ -30,6 +33,7 @@ public class BrandController {
                    .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_BRANDS')")
     @GetMapping("/name/{name}")
     public ResponseEntity<Brand> getBrandByName(@PathVariable String name) {
         Optional<Brand> brand = brandRepository.findByName(name);
@@ -37,6 +41,7 @@ public class BrandController {
                    .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('WRITE_BRANDS')")
     @PostMapping
     public ResponseEntity<Brand> createBrand(@RequestBody Brand brand) {
         if (brandRepository.existsByName(brand.getName())) {
@@ -46,6 +51,7 @@ public class BrandController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBrand);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_BRANDS')")
     @PutMapping("/{id}")
     public ResponseEntity<Brand> updateBrand(@PathVariable Long id, @RequestBody Brand brandDetails) {
         Optional<Brand> brandOptional = brandRepository.findById(id);
@@ -62,6 +68,7 @@ public class BrandController {
         return ResponseEntity.ok(updatedBrand);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_BRANDS')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBrand(@PathVariable Long id) {
         if (!brandRepository.existsById(id)) {

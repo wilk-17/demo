@@ -132,9 +132,18 @@
         let currentCategoryId = null;
         let allCategories = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadCategories() {
             try {
-                const response = await fetch('/item-category');
+                const response = await fetch('/api/item-categories', { headers: getAuthHeaders() });
                 allCategories = await response.json();
                 displayCategories(allCategories);
             } catch (error) {
@@ -207,7 +216,7 @@
 
         async function editCategory(id) {
             try {
-                const response = await fetch(`/item-category/${id}`);
+                const response = await fetch(`/api/item-categories/${id}`, { headers: getAuthHeaders() });
                 const category = await response.json();
                 
                 currentCategoryId = id;
@@ -233,15 +242,15 @@
             try {
                 let response;
                 if (currentCategoryId) {
-                    response = await fetch(`/item-category/${currentCategoryId}`, {
+                    response = await fetch(`/api/item-categories/${currentCategoryId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(categoryData)
                     });
                 } else {
-                    response = await fetch('/item-category', {
+                    response = await fetch('/api/item-categories', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(categoryData)
                     });
                 }
@@ -262,7 +271,7 @@
             if (!confirm('¿Está seguro de eliminar esta categoría?')) return;
 
             try {
-                const response = await fetch(`/item-category/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/item-categories/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadCategories();
                     alert('Categoría eliminada exitosamente');
@@ -277,5 +286,6 @@
         // Load categories on page load
         loadCategories();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

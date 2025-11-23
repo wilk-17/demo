@@ -158,11 +158,20 @@
         let allStates = [];
         let currentCityId = null;
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadCities() {
             try {
                 const [citiesResponse, statesResponse] = await Promise.all([
-                    fetch('/city'),
-                    fetch('/state')
+                    fetch('/api/cities', { headers: getAuthHeaders() }),
+                    fetch('/api/states', { headers: getAuthHeaders() })
                 ]);
                 
                 allCities = await citiesResponse.json();
@@ -281,7 +290,7 @@
 
         async function editCity(id) {
             try {
-                const response = await fetch(`/city/${id}`);
+                const response = await fetch(`/api/cities/${id}`, { headers: getAuthHeaders() });
                 const city = await response.json();
                 
                 currentCityId = id;
@@ -311,15 +320,15 @@
             try {
                 let response;
                 if (currentCityId) {
-                    response = await fetch(`/city/${currentCityId}`, {
+                    response = await fetch(`/api/cities/${currentCityId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(cityData)
                     });
                 } else {
-                    response = await fetch('/city', {
+                    response = await fetch('/api/cities', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(cityData)
                     });
                 }
@@ -340,7 +349,7 @@
             if (!confirm('¿Está seguro de eliminar esta ciudad?')) return;
 
             try {
-                const response = await fetch(`/city/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/cities/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadCities();
                     alert('Ciudad eliminada exitosamente');
@@ -355,5 +364,6 @@
         // Load cities on page load
         loadCities();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

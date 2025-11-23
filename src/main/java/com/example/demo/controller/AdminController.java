@@ -15,7 +15,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+@PreAuthorize("hasAuthority('ADMIN_ALL')")
 public class AdminController {
 
     @Autowired

@@ -130,17 +130,26 @@
         let inventoryData = {};
         let allSalesOrderItems = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadItems() {
             try {
-                const [itemsRes, ordersRes, inventoryRes] = await Promise.all([
-                    fetch('/sales-order-item'),
-                    fetch('/sales-order'),
-                    fetch('/inventory-item')
+                const [itemsResponse, ordersResponse, inventoryResponse] = await Promise.all([
+                    fetch('/api/sales-order-items', { headers: getAuthHeaders() }),
+                    fetch('/api/sales-orders', { headers: getAuthHeaders() }),
+                    fetch('/api/inventory-items', { headers: getAuthHeaders() })
                 ]);
                 
-                allSalesOrderItems = await itemsRes.json();
-                const orders = await ordersRes.json();
-                const inventory = await inventoryRes.json();
+                allSalesOrderItems = await itemsResponse.json();
+                const orders = await ordersResponse.json();
+                const inventory = await inventoryResponse.json();
                 
                 // Create lookup maps
                 orders.forEach(order => ordersData[order.id] = order);
@@ -254,7 +263,7 @@
 
         async function editItem(id) {
             try {
-                const response = await fetch(`/sales-order-item/${id}`);
+                const response = await fetch(`/api/sales-order-items/${id}`, { headers: getAuthHeaders() });
                 const item = await response.json();
                 
                 currentItemId = id;
@@ -284,7 +293,7 @@
             };
 
             try {
-                const url = currentItemId ? `/sales-order-item/${currentItemId}` : '/sales-order-item';
+                const url = currentItemId ? `/api/sales-order-items/${currentItemId}` : '/api/sales-order-items';
                 const method = currentItemId ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -313,7 +322,7 @@
             }
 
             try {
-                const response = await fetch(`/sales-order-item/${id}`, {
+                const response = await fetch(`/api/sales-order-items/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -331,5 +340,6 @@
         // Cargar datos al iniciar
         window.onload = loadItems;
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

@@ -161,15 +161,24 @@
         let citiesData = {};
         let allPersons = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadPersons() {
             try {
-                const [personsRes, citiesRes] = await Promise.all([
-                    fetch('/person'),
-                    fetch('/city')
+                const [personsResponse, citiesResponse] = await Promise.all([
+                    fetch('/api/persons', { headers: getAuthHeaders() }),
+                    fetch('/api/cities', { headers: getAuthHeaders() })
                 ]);
                 
-                allPersons = await personsRes.json();
-                const cities = await citiesRes.json();
+                allPersons = await personsResponse.json();
+                const cities = await citiesResponse.json();
                 
                 // Create lookup map
                 cities.forEach(city => citiesData[city.id] = city);
@@ -259,7 +268,7 @@
 
         async function editPerson(id) {
             try {
-                const response = await fetch(`/person/${id}`);
+                const response = await fetch(`/api/persons/${id}`, { headers: getAuthHeaders() });
                 const person = await response.json();
                 
                 currentPersonId = id;
@@ -302,15 +311,15 @@
             try {
                 let response;
                 if (currentPersonId) {
-                    response = await fetch(`/person/${currentPersonId}`, {
+                    response = await fetch(`/api/persons/${currentPersonId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(personData)
                     });
                 } else {
-                    response = await fetch('/person', {
+                    response = await fetch('/api/persons', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(personData)
                     });
                 }
@@ -331,7 +340,7 @@
             if (!confirm('¿Está seguro de eliminar esta persona?')) return;
 
             try {
-                const response = await fetch(`/person/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/persons/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadPersons();
                     alert('Persona eliminada exitosamente');
@@ -346,5 +355,6 @@
         // Load persons on page load
         loadPersons();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

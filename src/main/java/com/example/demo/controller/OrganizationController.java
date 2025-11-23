@@ -5,6 +5,7 @@ import com.example.demo.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +18,14 @@ public class OrganizationController {
     @Autowired
     private OrganizationRepository organizationRepository;
 
+    @PreAuthorize("hasAuthority('READ_ORGANIZATIONS')")
     @GetMapping
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         List<Organization> organizations = organizationRepository.findAll();
         return ResponseEntity.ok(organizations);
     }
 
+    @PreAuthorize("hasAuthority('READ_ORGANIZATIONS')")
     @GetMapping("/{id}")
     public ResponseEntity<Organization> getOrganizationById(@PathVariable Long id) {
         Optional<Organization> organization = organizationRepository.findById(id);
@@ -30,12 +33,14 @@ public class OrganizationController {
                           .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('WRITE_ORGANIZATIONS')")
     @PostMapping
     public ResponseEntity<Organization> createOrganization(@RequestBody Organization organization) {
         Organization savedOrganization = organizationRepository.save(organization);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedOrganization);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_ORGANIZATIONS')")
     @PutMapping("/{id}")
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long id, 
                                                            @RequestBody Organization organizationDetails) {
@@ -53,6 +58,7 @@ public class OrganizationController {
         return ResponseEntity.ok(updatedOrganization);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_ORGANIZATIONS')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long id) {
         if (!organizationRepository.existsById(id)) {

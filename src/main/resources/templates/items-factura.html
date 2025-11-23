@@ -136,17 +136,26 @@
         let inventoryData = {};
         let allInvoiceItems = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadItems() {
             try {
-                const [itemsRes, invoicesRes, inventoryRes] = await Promise.all([
-                    fetch('/invoice-item'),
-                    fetch('/invoice'),
-                    fetch('/inventory-item')
+                const [itemsResponse, invoicesResponse, inventoryResponse] = await Promise.all([
+                    fetch('/api/invoice-items', { headers: getAuthHeaders() }),
+                    fetch('/api/invoices', { headers: getAuthHeaders() }),
+                    fetch('/api/inventory-items', { headers: getAuthHeaders() })
                 ]);
                 
-                allInvoiceItems = await itemsRes.json();
-                const invoices = await invoicesRes.json();
-                const inventory = await inventoryRes.json();
+                allInvoiceItems = await itemsResponse.json();
+                const invoices = await invoicesResponse.json();
+                inventory = await inventoryResponse.json();
                 
                 // Create lookup maps
                 invoices.forEach(invoice => invoicesData[invoice.id] = invoice);
@@ -273,7 +282,7 @@
 
         async function editItem(id) {
             try {
-                const response = await fetch(`/invoice-item/${id}`);
+                const response = await fetch(`/api/invoice-items/${id}`, { headers: getAuthHeaders() });
                 const item = await response.json();
                 
                 currentItemId = id;
@@ -305,7 +314,7 @@
             };
 
             try {
-                const url = currentItemId ? `/invoice-item/${currentItemId}` : '/invoice-item';
+                const url = currentItemId ? `/api/invoice-items/${currentItemId}` : '/api/invoice-items';
                 const method = currentItemId ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -334,7 +343,7 @@
             }
 
             try {
-                const response = await fetch(`/invoice-item/${id}`, {
+                const response = await fetch(`/api/invoice-items/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -352,5 +361,6 @@
         // Cargar datos al iniciar
         window.onload = loadItems;
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

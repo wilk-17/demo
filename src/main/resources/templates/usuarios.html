@@ -179,9 +179,18 @@
             5: 'info'
         };
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadRoles() {
             try {
-                const response = await fetch('/role');
+                const response = await fetch('/api/roles', { headers: getAuthHeaders() });
                 const roles = await response.json();
                 const select = document.getElementById('roleId');
                 const filterSelect = document.getElementById('roleFilter');
@@ -201,7 +210,7 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch('/users');
+                const response = await fetch('/api/users', { headers: getAuthHeaders() });
                 allUsers = await response.json();
                 
                 displayUsers(allUsers);
@@ -267,7 +276,7 @@
 
         async function editUser(id) {
             try {
-                const response = await fetch(`/users/${id}`);
+                const response = await fetch(`/api/users/${id}`, { headers: getAuthHeaders() });
                 const user = await response.json();
                 
                 currentUserId = id;
@@ -305,15 +314,15 @@
             try {
                 let response;
                 if (currentUserId) {
-                    response = await fetch(`/users/${currentUserId}`, {
+                    response = await fetch(`/api/users/${currentUserId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(userData)
                     });
                 } else {
-                    response = await fetch('/users', {
+                    response = await fetch('/api/users', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(userData)
                     });
                 }
@@ -334,7 +343,7 @@
             if (!confirm('¿Está seguro de eliminar este usuario?')) return;
 
             try {
-                const response = await fetch(`/users/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadUsers();
                     alert('Usuario eliminado exitosamente');
@@ -422,5 +431,6 @@
         // Load roles and users on page load
         loadRoles().then(() => loadUsers());
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

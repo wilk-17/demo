@@ -6,23 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/invoice")
+@RequestMapping("/api/invoices")
 public class InvoiceController {
 
     @Autowired
     private InvoiceRepository invoiceRepository;
 
+    @PreAuthorize("hasAuthority('READ_INVOICES')")
     @GetMapping
     public ResponseEntity<List<Invoice>> getAllInvoices() {
         List<Invoice> invoices = invoiceRepository.findAll();
         return ResponseEntity.ok(invoices);
     }
 
+    @PreAuthorize("hasAuthority('READ_INVOICES')")
     @GetMapping("/{id}")
     public ResponseEntity<Invoice> getInvoiceById(@PathVariable Long id) {
         Optional<Invoice> invoice = invoiceRepository.findById(id);
@@ -30,18 +33,21 @@ public class InvoiceController {
                      .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_INVOICES')")
     @GetMapping("/employee/{employeeId}")
     public ResponseEntity<List<Invoice>> getInvoicesByEmployee(@PathVariable Long employeeId) {
         List<Invoice> invoices = invoiceRepository.findByEmployeeId(employeeId);
         return ResponseEntity.ok(invoices);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_INVOICES')")
     @PostMapping
     public ResponseEntity<Invoice> createInvoice(@RequestBody Invoice invoice) {
         Invoice savedInvoice = invoiceRepository.save(invoice);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedInvoice);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_INVOICES')")
     @PutMapping("/{id}")
     public ResponseEntity<Invoice> updateInvoice(@PathVariable Long id, 
                                                   @RequestBody Invoice invoiceDetails) {
@@ -61,6 +67,7 @@ public class InvoiceController {
         return ResponseEntity.ok(updatedInvoice);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_INVOICES')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteInvoice(@PathVariable Long id) {
         if (!invoiceRepository.existsById(id)) {

@@ -52,15 +52,17 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-                .requestMatchers("/", "/index", "/login", "/login.html").permitAll()
+                .requestMatchers("/auth/**", "/api/auth/**", "/api/debug/**").permitAll()
+                .requestMatchers("/", "/index", "/login", "/login.html", "/favicon.ico", "/error").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
                 // Permitir acceso a las páginas HTML del dashboard (el auth-guard.js las protegerá)
                 .requestMatchers("/organizaciones", "/sucursales", "/usuarios", "/roles", 
                                "/estados", "/ciudades", "/personas", "/empleados",
                                "/marcas", "/categorias", "/inventario", "/ordenes-venta",
-                               "/facturas", "/items-orden-venta", "/items-factura").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMINISTRADOR")
+                               "/facturas", "/items-orden-venta", "/items-factura",
+                               "/permisos", "/asignaciones", "/cotizaciones", "/lineas-cotizacion",
+                               "/items-cotizacion", "/metas-ventas").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )

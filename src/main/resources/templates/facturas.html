@@ -157,17 +157,26 @@
         let salesOrdersData = {};
         let allInvoices = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadInvoices() {
             try {
-                const [invoicesRes, employeesRes, ordersRes] = await Promise.all([
-                    fetch('/invoice'),
-                    fetch('/employee'),
-                    fetch('/sales-order')
+                const [invoicesResponse, employeesResponse, salesOrdersResponse] = await Promise.all([
+                    fetch('/api/invoices', { headers: getAuthHeaders() }),
+                    fetch('/api/employees', { headers: getAuthHeaders() }),
+                    fetch('/api/sales-orders', { headers: getAuthHeaders() })
                 ]);
                 
-                allInvoices = await invoicesRes.json();
-                const employees = await employeesRes.json();
-                const salesOrders = await ordersRes.json();
+                allInvoices = await invoicesResponse.json();
+                const employees = await employeesResponse.json();
+                const salesOrders = await salesOrdersResponse.json();
                 
                 // Create lookup maps
                 employees.forEach(emp => employeesData[emp.id] = emp);
@@ -267,7 +276,7 @@
 
         async function editInvoice(id) {
             try {
-                const response = await fetch(`/invoice/${id}`);
+                const response = await fetch(`/api/invoices/${id}`, { headers: getAuthHeaders() });
                 const invoice = await response.json();
                 
                 currentInvoiceId = id;
@@ -308,15 +317,15 @@
             try {
                 let response;
                 if (currentInvoiceId) {
-                    response = await fetch(`/invoice/${currentInvoiceId}`, {
+                    response = await fetch(`/api/invoices/${currentInvoiceId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(invoiceData)
                     });
                 } else {
-                    response = await fetch('/invoice', {
+                    response = await fetch('/api/invoices', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(invoiceData)
                     });
                 }
@@ -337,7 +346,7 @@
             if (!confirm('¿Está seguro de eliminar esta factura?')) return;
 
             try {
-                const response = await fetch(`/invoice/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/invoices/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadInvoices();
                     alert('Factura eliminada exitosamente');
@@ -352,5 +361,6 @@
         // Load invoices on page load
         loadInvoices();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

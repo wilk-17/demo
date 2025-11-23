@@ -136,9 +136,18 @@
         let currentBrandId = null;
         let allBrands = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadBrands() {
             try {
-                const response = await fetch('/brand');
+                const response = await fetch('/api/brands', { headers: getAuthHeaders() });
                 allBrands = await response.json();
                 displayBrands(allBrands);
             } catch (error) {
@@ -213,7 +222,7 @@
 
         async function editBrand(id) {
             try {
-                const response = await fetch(`/brand/${id}`);
+                const response = await fetch(`/api/brands/${id}`, { headers: getAuthHeaders() });
                 const brand = await response.json();
                 
                 currentBrandId = id;
@@ -244,15 +253,15 @@
             try {
                 let response;
                 if (currentBrandId) {
-                    response = await fetch(`/brand/${currentBrandId}`, {
+                    response = await fetch(`/api/brands/${currentBrandId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(brandData)
                     });
                 } else {
-                    response = await fetch('/brand', {
+                    response = await fetch('/api/brands', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(brandData)
                     });
                 }
@@ -273,7 +282,7 @@
             if (!confirm('¿Está seguro de eliminar esta marca?')) return;
 
             try {
-                const response = await fetch(`/brand/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/brands/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadBrands();
                     alert('Marca eliminada exitosamente');
@@ -288,5 +297,6 @@
         // Load brands on page load
         loadBrands();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

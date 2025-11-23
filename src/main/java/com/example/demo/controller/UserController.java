@@ -5,13 +5,14 @@ import com.example.demo.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
   @Autowired
@@ -20,11 +21,13 @@ public class UserController {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
+  @PreAuthorize("hasAuthority('MANAGE_USERS')")
   @GetMapping
   public List<User> getAllUsers() {
     return usuarioRepository.findAll();
   }
 
+  @PreAuthorize("hasAuthority('MANAGE_USERS')")
   @GetMapping("/{id}")
   public ResponseEntity<User> getUserById(@PathVariable Long id) {
     return usuarioRepository.findById(id)
@@ -32,6 +35,7 @@ public class UserController {
       .orElse(ResponseEntity.notFound().build());
   }
 
+  @PreAuthorize("hasAuthority('MANAGE_USERS')")
   @PostMapping
   public ResponseEntity<User> createUser(@RequestBody User user) {
     try {
@@ -46,6 +50,7 @@ public class UserController {
     }
   }
 
+  @PreAuthorize("hasAuthority('MANAGE_USERS')")
   @PutMapping("/{id}")
   public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
     return usuarioRepository.findById(id)
@@ -69,6 +74,7 @@ public class UserController {
       .orElse(ResponseEntity.notFound().build());
   }
 
+  @PreAuthorize("hasAuthority('MANAGE_USERS')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
     return usuarioRepository.findById(id)

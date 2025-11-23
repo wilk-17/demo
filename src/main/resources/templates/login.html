@@ -124,7 +124,7 @@
                     const data = await response.json();
                     
                     // Verificar que sea ADMINISTRADOR
-                    if (data.roleName !== 'Administrador') {
+                    if (data.roleName !== 'ADMIN') {
                         errorAlert.textContent = '⚠️ Acceso denegado. Solo los administradores pueden acceder a este sistema.';
                         errorAlert.classList.remove('d-none');
                         return;
@@ -159,7 +159,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     // Si ya tiene sesión válida, redirigir al dashboard
-                    if (data.roleName === 'Administrador') {
+                    if (data.roleName === 'ADMIN') {
                         window.location.href = '/index';
                     } else {
                         logout();

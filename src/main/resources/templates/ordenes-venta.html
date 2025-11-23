@@ -71,10 +71,10 @@
                         <label class="form-label fw-bold">Estado:</label>
                         <select class="form-select" id="statusFilter" onchange="filterOrders()">
                             <option value="">Todos los estados</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="procesando">Procesando</option>
-                            <option value="completado">Completado</option>
-                            <option value="cancelado">Cancelado</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="processing">Procesando</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
                         </select>
                     </div>
                     <div class="col-md-5">
@@ -142,10 +142,10 @@
                             <label for="status" class="form-label">Estado *</label>
                             <select class="form-select" id="status" required>
                                 <option value="">Seleccione...</option>
-                                <option value="pendiente">Pendiente</option>
-                                <option value="procesando">Procesando</option>
-                                <option value="completada">Completada</option>
-                                <option value="cancelada">Cancelada</option>
+                                <option value="pending">Pendiente</option>
+                                <option value="processing">Procesando</option>
+                                <option value="completed">Completada</option>
+                                <option value="cancelled">Cancelada</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -170,15 +170,24 @@
         let employeesData = {};
         let allOrders = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadOrders() {
             try {
-                const [ordersRes, employeesRes] = await Promise.all([
-                    fetch('/sales-order'),
-                    fetch('/employee')
+                const [ordersResponse, employeesResponse] = await Promise.all([
+                    fetch('/api/sales-orders', { headers: getAuthHeaders() }),
+                    fetch('/api/employees', { headers: getAuthHeaders() })
                 ]);
                 
-                allOrders = await ordersRes.json();
-                const employees = await employeesRes.json();
+                allOrders = await ordersResponse.json();
+                const employees = await employeesResponse.json();
                 
                 // Create lookup map
                 employees.forEach(emp => employeesData[emp.id] = emp);
@@ -222,10 +231,10 @@
             orders.forEach(order => {
                 const employee = employeesData[order.employeeId] || {};
                 const statusBadge = {
-                    'pendiente': 'warning',
-                    'procesando': 'info',
-                    'completada': 'success',
-                    'cancelada': 'danger'
+                    'pending': 'warning',
+                    'processing': 'info',
+                    'completed': 'success',
+                    'cancelled': 'danger'
                 }[order.status] || 'secondary';
                 
                 const row = `
@@ -285,7 +294,7 @@
 
         async function editOrder(id) {
             try {
-                const response = await fetch(`/sales-order/${id}`);
+                const response = await fetch(`/api/sales-orders/${id}`, { headers: getAuthHeaders() });
                 const order = await response.json();
                 
                 currentOrderId = id;
@@ -325,15 +334,15 @@
             try {
                 let response;
                 if (currentOrderId) {
-                    response = await fetch(`/sales-order/${currentOrderId}`, {
+                    response = await fetch(`/api/sales-orders/${currentOrderId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(orderData)
                     });
                 } else {
-                    response = await fetch('/sales-order', {
+                    response = await fetch('/api/sales-orders', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(orderData)
                     });
                 }
@@ -354,7 +363,7 @@
             if (!confirm('¿Está seguro de eliminar esta orden de venta?')) return;
 
             try {
-                const response = await fetch(`/sales-order/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/sales-orders/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadOrders();
                     alert('Orden eliminada exitosamente');
@@ -369,5 +378,6 @@
         // Load orders on page load
         loadOrders();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

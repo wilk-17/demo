@@ -71,10 +71,10 @@
                         <label class="form-label fw-bold">Filtrar por Estado:</label>
                         <select class="form-select" id="statusFilter" onchange="filterByStatus()">
                             <option value="">Todos los estados</option>
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
-                            <option value="vacaciones">Vacaciones</option>
-                            <option value="suspendido">Suspendido</option>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="vacation">Vacaciones</option>
+                            <option value="suspended">Suspendido</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -165,10 +165,10 @@
                                 <label for="status" class="form-label">Estado *</label>
                                 <select class="form-select" id="status" required>
                                     <option value="">Seleccione...</option>
-                                    <option value="activo">Activo</option>
-                                    <option value="inactivo">Inactivo</option>
-                                    <option value="vacaciones">Vacaciones</option>
-                                    <option value="suspendido">Suspendido</option>
+                                    <option value="active">Activo</option>
+                                    <option value="inactive">Inactivo</option>
+                                    <option value="vacation">Vacaciones</option>
+                                    <option value="suspended">Suspendido</option>
                                 </select>
                             </div>
                         </div>
@@ -194,15 +194,24 @@
         let branchesData = {};
         let allEmployees = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadEmployees() {
             try {
-                const [employeesRes, branchesRes] = await Promise.all([
-                    fetch('/employee'),
-                    fetch('/branch')
+                const [employeesResponse, branchesResponse] = await Promise.all([
+                    fetch('/api/employees', { headers: getAuthHeaders() }),
+                    fetch('/api/branches', { headers: getAuthHeaders() })
                 ]);
                 
-                allEmployees = await employeesRes.json();
-                const branches = await branchesRes.json();
+                allEmployees = await employeesResponse.json();
+                const branches = await branchesResponse.json();
                 
                 // Create lookup map
                 branches.forEach(branch => branchesData[branch.id] = branch);
@@ -245,10 +254,10 @@
 
             employees.forEach(employee => {
                 const statusBadge = {
-                    'activo': 'success',
-                    'inactivo': 'secondary',
-                    'vacaciones': 'info',
-                    'suspendido': 'danger'
+                    'active': 'success',
+                    'inactive': 'secondary',
+                    'vacation': 'info',
+                    'suspended': 'danger'
                 }[employee.status] || 'secondary';
                 
                 const row = `
@@ -309,7 +318,7 @@
 
         async function editEmployee(id) {
             try {
-                const response = await fetch(`/employee/${id}`);
+                const response = await fetch(`/api/employees/${id}`, { headers: getAuthHeaders() });
                 const employee = await response.json();
                 
                 currentEmployeeId = id;
@@ -361,15 +370,15 @@
             try {
                 let response;
                 if (currentEmployeeId) {
-                    response = await fetch(`/employee/${currentEmployeeId}`, {
+                    response = await fetch(`/api/employees/${currentEmployeeId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(employeeData)
                     });
                 } else {
-                    response = await fetch('/employee', {
+                    response = await fetch('/api/employees', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(employeeData)
                     });
                 }
@@ -390,7 +399,7 @@
             if (!confirm('¿Está seguro de eliminar este empleado?')) return;
 
             try {
-                const response = await fetch(`/employee/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/employees/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadEmployees();
                     alert('Empleado eliminado exitosamente');
@@ -405,5 +414,6 @@
         // Load employees on page load
         loadEmployees();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

@@ -164,10 +164,10 @@
         async function loadBranches() {
             try {
                 const [branchesRes, orgsRes, citiesRes, statesRes] = await Promise.all([
-                    fetch('/branch', { headers: getAuthHeaders() }),
+                    fetch('/api/branches', { headers: getAuthHeaders() }),
                     fetch('/api/organizations', { headers: getAuthHeaders() }),
-                    fetch('/city', { headers: getAuthHeaders() }),
-                    fetch('/state', { headers: getAuthHeaders() })
+                    fetch('/api/cities', { headers: getAuthHeaders() }),
+                    fetch('/api/states', { headers: getAuthHeaders() })
                 ]);
                 
                 // Verificar si alguna respuesta es 401/403
@@ -305,7 +305,7 @@
 
         async function editBranch(id) {
             try {
-                const response = await fetch(`/branch/${id}`, {
+                const response = await fetch(`/api/branches/${id}`, {
                     headers: getAuthHeaders()
                 });
                 const branch = await response.json();
@@ -344,13 +344,13 @@
             try {
                 let response;
                 if (currentBranchId) {
-                    response = await fetch(`/branch/${currentBranchId}`, {
+                    response = await fetch(`/api/branches/${currentBranchId}`, {
                         method: 'PUT',
                         headers: getAuthHeaders(),
                         body: JSON.stringify(branchData)
                     });
                 } else {
-                    response = await fetch('/branch', {
+                    response = await fetch('/api/branches', {
                         method: 'POST',
                         headers: getAuthHeaders(),
                         body: JSON.stringify(branchData)
@@ -373,7 +373,7 @@
             if (!confirm('¿Está seguro de eliminar esta sucursal?')) return;
 
             try {
-                const response = await fetch(`/branch/${id}`, { 
+                const response = await fetch(`/api/branches/${id}`, { 
                     method: 'DELETE',
                     headers: getAuthHeaders()
                 });

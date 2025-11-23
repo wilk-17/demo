@@ -96,4 +96,34 @@ public class ViewController {
     public String itemsFactura() {
         return "items-factura";
     }
+
+    @GetMapping("/asignaciones")
+    public String asignaciones() {
+        return "asignaciones";
+    }
+
+    @GetMapping("/cotizaciones")
+    public String cotizaciones() {
+        return "cotizaciones";
+    }
+
+    @GetMapping("/lineas-cotizacion")
+    public String lineasCotizacion() {
+        return "lineas-cotizacion";
+    }
+
+    @GetMapping("/items-cotizacion")
+    public String itemsCotizacion() {
+        return "items-cotizacion";
+    }
+
+    @GetMapping("/metas-ventas")
+    public String metasVentas() {
+        return "metas-ventas";
+    }
+
+    @GetMapping("/permisos")
+    public String permisos() {
+        return "permisos";
+    }
 }

@@ -32,7 +32,7 @@
             const data = await response.json();
             
             // Verificar que sea administrador
-            if (data.roleName !== 'Administrador') {
+            if (data.roleName !== 'ADMIN') {
                 console.log('Usuario no es administrador, redirigiendo al login...');
                 localStorage.clear();
                 alert('⚠️ Acceso denegado. Solo los administradores pueden acceder a este sistema.');

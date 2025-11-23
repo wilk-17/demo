@@ -150,9 +150,18 @@
         let currentRoleId = null;
         let allRoles = [];
 
+                // Función para obtener headers de autenticación
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
         async function loadRoles() {
             try {
-                const response = await fetch('/role');
+                const response = await fetch('/api/roles', { headers: getAuthHeaders() });
                 allRoles = await response.json();
                 
                 displayRoles(allRoles);
@@ -231,7 +240,7 @@
 
         async function viewRole(id) {
             try {
-                const response = await fetch(`/role/${id}`);
+                const response = await fetch(`/api/roles/${id}`, { headers: getAuthHeaders() });
                 const role = await response.json();
                 alert(`ID: ${role.id}\nNombre: ${role.name}\nDescripción: ${role.description || 'N/A'}`);
             } catch (error) {
@@ -241,7 +250,7 @@
 
         async function editRole(id) {
             try {
-                const response = await fetch(`/role/${id}`);
+                const response = await fetch(`/api/roles/${id}`, { headers: getAuthHeaders() });
                 const role = await response.json();
                 
                 currentRoleId = id;
@@ -270,15 +279,15 @@
             try {
                 let response;
                 if (currentRoleId) {
-                    response = await fetch(`/role/${currentRoleId}`, {
+                    response = await fetch(`/api/roles/${currentRoleId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(roleData)
                     });
                 } else {
-                    response = await fetch('/role', {
+                    response = await fetch('/api/roles', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify(roleData)
                     });
                 }
@@ -299,7 +308,7 @@
             if (!confirm('¿Está seguro de eliminar este rol?')) return;
 
             try {
-                const response = await fetch(`/role/${id}`, { method: 'DELETE' });
+                const response = await fetch(`/api/roles/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
                 if (response.ok || response.status === 204) {
                     loadRoles();
                     alert('Rol eliminado exitosamente');
@@ -314,5 +323,6 @@
         // Cargar roles al iniciar
         loadRoles();
     </script>
+    <script src="/js/auth-guard.js"></script>
 </body>
 </html>

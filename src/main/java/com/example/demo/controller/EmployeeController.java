@@ -6,23 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/employee")
+@RequestMapping("/api/employees")
 public class EmployeeController {
 
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @PreAuthorize("hasAuthority('READ_EMPLOYEES')")
     @GetMapping
     public ResponseEntity<List<Employee>> getAllEmployees() {
         List<Employee> employees = employeeRepository.findAll();
         return ResponseEntity.ok(employees);
     }
 
+    @PreAuthorize("hasAuthority('READ_EMPLOYEES')")
     @GetMapping("/{id}")
     public ResponseEntity<Employee> getEmployeeById(@PathVariable Long id) {
         Optional<Employee> employee = employeeRepository.findById(id);
@@ -30,6 +33,7 @@ public class EmployeeController {
                       .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_EMPLOYEES')")
     @GetMapping("/email/{email}")
     public ResponseEntity<Employee> getEmployeeByEmail(@PathVariable String email) {
         Optional<Employee> employee = employeeRepository.findByEmail(email);
@@ -37,24 +41,28 @@ public class EmployeeController {
                       .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_EMPLOYEES')")
     @GetMapping("/branch/{branchId}")
     public ResponseEntity<List<Employee>> getEmployeesByBranch(@PathVariable Long branchId) {
         List<Employee> employees = employeeRepository.findByBranchId(branchId);
         return ResponseEntity.ok(employees);
     }
 
+    @PreAuthorize("hasAuthority('READ_EMPLOYEES')")
     @GetMapping("/status/{status}")
     public ResponseEntity<List<Employee>> getEmployeesByStatus(@PathVariable String status) {
         List<Employee> employees = employeeRepository.findByStatus(status);
         return ResponseEntity.ok(employees);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_EMPLOYEES')")
     @PostMapping
     public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
         Employee savedEmployee = employeeRepository.save(employee);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedEmployee);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_EMPLOYEES')")
     @PutMapping("/{id}")
     public ResponseEntity<Employee> updateEmployee(@PathVariable Long id, @RequestBody Employee employeeDetails) {
         Optional<Employee> employeeOptional = employeeRepository.findById(id);
@@ -78,6 +86,7 @@ public class EmployeeController {
         return ResponseEntity.ok(updatedEmployee);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_EMPLOYEES')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
         if (!employeeRepository.existsById(id)) {

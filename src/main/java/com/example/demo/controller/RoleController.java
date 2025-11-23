@@ -5,24 +5,27 @@ import com.example.demo.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/api/roles")
 public class RoleController {
 
     @Autowired
     private RoleRepository roleRepository;
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @GetMapping
     public ResponseEntity<List<Role>> getAllRoles() {
         List<Role> roles = roleRepository.findAll();
         return ResponseEntity.ok(roles);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @GetMapping("/{id}")
     public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
         Optional<Role> role = roleRepository.findById(id);
@@ -30,6 +33,7 @@ public class RoleController {
                   .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @GetMapping("/name/{name}")
     public ResponseEntity<Role> getRoleByName(@PathVariable String name) {
         Optional<Role> role = roleRepository.findByName(name);
@@ -37,6 +41,7 @@ public class RoleController {
                   .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @PostMapping
     public ResponseEntity<Role> createRole(@RequestBody Role role) {
         if (roleRepository.existsByName(role.getName())) {
@@ -46,6 +51,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRole);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @PutMapping("/{id}")
     public ResponseEntity<Role> updateRole(@PathVariable Long id, @RequestBody Role roleDetails) {
         Optional<Role> roleOptional = roleRepository.findById(id);
@@ -61,6 +67,7 @@ public class RoleController {
         return ResponseEntity.ok(updatedRole);
     }
 
+    @PreAuthorize("hasAuthority('MANAGE_ROLES')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
         if (!roleRepository.existsById(id)) {

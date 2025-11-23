@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas de Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .badge-MONTHLY { background-color: #17a2b8; }
+        .badge-QUARTERLY { background-color: #ffc107; color: #000; }
+        .badge-YEARLY { background-color: #28a745; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> Sistema de Gestión
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/metas-ventas">Metas de Ventas</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-trophy text-success"></i> Metas de Ventas</h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#goalModal" onclick="openCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Meta
+                    </button>
+                    <button class="btn btn-primary" onclick="loadGoals()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Periodo:</label>
+                    <select class="form-select" id="periodFilter" onchange="filterGoals()">
+                        <option value="">Todos los periodos</option>
+                        <option value="MONTHLY">Mensual</option>
+                        <option value="QUARTERLY">Trimestral</option>
+                        <option value="YEARLY">Anual</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Empleado:</label>
+                    <select class="form-select" id="employeeFilter" onchange="filterGoals()">
+                        <option value="">Todos los empleados</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Sucursal:</label>
+                    <select class="form-select" id="branchFilter" onchange="filterGoals()">
+                        <option value="">Todas las sucursales</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Total:</label>
+                    <h3 class="text-primary" id="totalGoals">0</h3>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-success">
+                        <tr>
+                            <th>ID</th>
+                            <th>Alcance</th>
+                            <th>Periodo</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Meta ($)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="goalsTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar -->
+    <div class="modal fade" id="goalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Nueva Meta de Ventas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="goalForm">
+                        <input type="hidden" id="goalId">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Meta *</label>
+                            <select class="form-select" id="goalType" onchange="toggleScope()">
+                                <option value="employee">Por Empleado</option>
+                                <option value="branch">Por Sucursal</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="employeeIdDiv">
+                            <label class="form-label">Empleado *</label>
+                            <select class="form-select" id="employeeId">
+                                <option value="">Seleccione un empleado...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="branchIdDiv" style="display:none;">
+                            <label class="form-label">Sucursal *</label>
+                            <select class="form-select" id="branchId">
+                                <option value="">Seleccione una sucursal...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Periodo *</label>
+                            <select class="form-select" id="periodType" required>
+                                <option value="MONTHLY">Mensual</option>
+                                <option value="QUARTERLY">Trimestral</option>
+                                <option value="YEARLY">Anual</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha Inicio *</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha Fin *</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Meta ($) *</label>
+                            <input type="number" class="form-control" id="targetAmount" step="0.01" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGoal()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visualizar -->
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Meta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth-guard.js"></script>
+    <script>
+        const API_URL = '/api/sales-goals';
+        let allGoals = [];
+        let employeesData = {};
+        let branchesData = {};
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function toggleScope() {
+            const type = document.getElementById('goalType').value;
+            document.getElementById('employeeIdDiv').style.display = type === 'employee' ? 'block' : 'none';
+            document.getElementById('branchIdDiv').style.display = type === 'branch' ? 'block' : 'none';
+        }
+
+        async function loadGoals() {
+            try {
+                const [goalsRes, employeesRes, branchesRes] = await Promise.all([
+                    fetch(API_URL, { headers: getAuthHeaders() }),
+                    fetch('/api/employees', { headers: getAuthHeaders() }),
+                    fetch('/api/branches', { headers: getAuthHeaders() })
+                ]);
+                
+                allGoals = await goalsRes.json();
+                const employees = await employeesRes.json();
+                const branches = await branchesRes.json();
+
+                employees.forEach(e => employeesData[e.id] = e);
+                branches.forEach(b => branchesData[b.id] = b);
+
+                const employeeSelect = document.getElementById('employeeId');
+                const employeeFilter = document.getElementById('employeeFilter');
+                employeeSelect.innerHTML = '<option value="">Seleccione un empleado...</option>';
+                employeeFilter.innerHTML = '<option value="">Todos los empleados</option>';
+                employees.forEach(e => {
+                    employeeSelect.innerHTML += `<option value="${e.id}">${e.firstName} ${e.lastName}</option>`;
+                    employeeFilter.innerHTML += `<option value="${e.id}">${e.firstName} ${e.lastName}</option>`;
+                });
+
+                const branchSelect = document.getElementById('branchId');
+                const branchFilter = document.getElementById('branchFilter');
+                branchSelect.innerHTML = '<option value="">Seleccione una sucursal...</option>';
+                branchFilter.innerHTML = '<option value="">Todas las sucursales</option>';
+                branches.forEach(b => {
+                    branchSelect.innerHTML += `<option value="${b.id}">Sucursal #${b.id}</option>`;
+                    branchFilter.innerHTML += `<option value="${b.id}">Sucursal #${b.id}</option>`;
+                });
+
+                displayGoals(allGoals);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar metas');
+            }
+        }
+
+        function displayGoals(goals) {
+            const tbody = document.getElementById('goalsTableBody');
+            if (goals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><i class="bi bi-inbox"></i> No se encontraron metas</td></tr>';
+                document.getElementById('totalGoals').textContent = '0';
+                return;
+            }
+
+            tbody.innerHTML = goals.map(g => {
+                const employee = employeesData[g.employeeId] || {};
+                const branch = branchesData[g.branchId] || {};
+                const scope = g.employeeId ? 
+                    `<i class="bi bi-person"></i> ${employee.firstName || 'N/A'} ${employee.lastName || ''}` : 
+                    `<i class="bi bi-building"></i> Sucursal #${g.branchId}`;
+                return `
+                    <tr>
+                        <td><strong>${g.id}</strong></td>
+                        <td>${scope}</td>
+                        <td><span class="badge badge-${g.periodType}">${g.periodType}</span></td>
+                        <td>${g.startDate || ''}</td>
+                        <td>${g.endDate || ''}</td>
+                        <td><strong>$${parseFloat(g.targetAmount).toFixed(2)}</strong></td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewGoal(${g.id})" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="editGoal(${g.id})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteGoal(${g.id})" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('totalGoals').textContent = goals.length;
+        }
+
+        function filterGoals() {
+            const period = document.getElementById('periodFilter').value;
+            const employeeId = document.getElementById('employeeFilter').value;
+            const branchId = document.getElementById('branchFilter').value;
+
+            let filtered = allGoals;
+
+            if (period) {
+                filtered = filtered.filter(g => g.periodType === period);
+            }
+
+            if (employeeId) {
+                filtered = filtered.filter(g => g.employeeId == employeeId);
+            }
+
+            if (branchId) {
+                filtered = filtered.filter(g => g.branchId == branchId);
+            }
+
+            displayGoals(filtered);
+        }
+
+        function openCreateModal() {
+            document.getElementById('goalForm').reset();
+            document.getElementById('goalId').value = '';
+            document.getElementById('modalTitle').textContent = 'Nueva Meta de Ventas';
+            toggleScope();
+        }
+
+        async function editGoal(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { headers: getAuthHeaders() });
+                const goal = await response.json();
+
+                document.getElementById('goalId').value = goal.id;
+                document.getElementById('goalType').value = goal.employeeId ? 'employee' : 'branch';
+                toggleScope();
+                
+                if (goal.employeeId) {
+                    document.getElementById('employeeId').value = goal.employeeId;
+                } else {
+                    document.getElementById('branchId').value = goal.branchId;
+                }
+                
+                document.getElementById('periodType').value = goal.periodType;
+                document.getElementById('startDate').value = goal.startDate;
+                document.getElementById('endDate').value = goal.endDate;
+                document.getElementById('targetAmount').value = goal.targetAmount;
+                document.getElementById('modalTitle').textContent = 'Editar Meta';
+
+                new bootstrap.Modal(document.getElementById('goalModal')).show();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar meta');
+            }
+        }
+
+        async function viewGoal(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { headers: getAuthHeaders() });
+                const goal = await response.json();
+                const employee = employeesData[goal.employeeId] || {};
+                const branch = branchesData[goal.branchId] || {};
+
+                const scope = goal.employeeId ? 
+                    `${employee.firstName || 'N/A'} ${employee.lastName || ''}` : 
+                    `Sucursal #${goal.branchId}`;
+
+                document.getElementById('viewModalBody').innerHTML = `
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8">${goal.id}</dd>
+                        <dt class="col-sm-4">Alcance:</dt>
+                        <dd class="col-sm-8">${scope}</dd>
+                        <dt class="col-sm-4">Periodo:</dt>
+                        <dd class="col-sm-8"><span class="badge badge-${goal.periodType}">${goal.periodType}</span></dd>
+                        <dt class="col-sm-4">Fecha Inicio:</dt>
+                        <dd class="col-sm-8">${goal.startDate || 'N/A'}</dd>
+                        <dt class="col-sm-4">Fecha Fin:</dt>
+                        <dd class="col-sm-8">${goal.endDate || 'N/A'}</dd>
+                        <dt class="col-sm-4">Meta:</dt>
+                        <dd class="col-sm-8"><strong>$${parseFloat(goal.targetAmount).toFixed(2)}</strong></dd>
+                    </dl>
+                `;
+
+                new bootstrap.Modal(document.getElementById('viewModal')).show();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function saveGoal() {
+            const type = document.getElementById('goalType').value;
+            const periodType = document.getElementById('periodType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const targetAmount = document.getElementById('targetAmount').value;
+
+            const employeeId = type === 'employee' ? document.getElementById('employeeId').value : null;
+            const branchId = type === 'branch' ? document.getElementById('branchId').value : null;
+
+            if (!periodType || !startDate || !endDate || !targetAmount || (!employeeId && !branchId)) {
+                alert('Todos los campos marcados con * son requeridos');
+                return;
+            }
+
+            const goal = {
+                employeeId: employeeId ? parseInt(employeeId) : null,
+                branchId: branchId ? parseInt(branchId) : null,
+                periodType,
+                startDate,
+                endDate,
+                targetAmount: parseFloat(targetAmount),
+                createdByUserId: 1
+            };
+
+            try {
+                const id = document.getElementById('goalId').value;
+                const url = id ? `${API_URL}/${id}` : API_URL;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(goal)
+                });
+
+                if (response.ok) {
+                    alert('Meta guardada exitosamente');
+                    bootstrap.Modal.getInstance(document.getElementById('goalModal')).hide();
+                    loadGoals();
+                } else {
+                    alert('Error al guardar meta');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar');
+            }
+        }
+
+        async function deleteGoal(id) {
+            if (!confirm('¿Está seguro de eliminar esta meta?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    alert('Meta eliminada');
+                    loadGoals();
+                } else {
+                    alert('Error al eliminar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        loadGoals();
+    </script>
+</body>
+</html>

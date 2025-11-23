@@ -6,23 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/person")
+@RequestMapping("/api/persons")
 public class PersonController {
 
     @Autowired
     private PersonRepository personRepository;
 
+    @PreAuthorize("hasAuthority('READ_PERSONS')")
     @GetMapping
     public ResponseEntity<List<Person>> getAllPersons() {
         List<Person> persons = personRepository.findAll();
         return ResponseEntity.ok(persons);
     }
 
+    @PreAuthorize("hasAuthority('READ_PERSONS')")
     @GetMapping("/{id}")
     public ResponseEntity<Person> getPersonById(@PathVariable Long id) {
         Optional<Person> person = personRepository.findById(id);
@@ -30,6 +33,7 @@ public class PersonController {
                     .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_PERSONS')")
     @GetMapping("/dni/{dni}")
     public ResponseEntity<Person> getPersonByDni(@PathVariable String dni) {
         Optional<Person> person = personRepository.findByDni(dni);
@@ -37,6 +41,7 @@ public class PersonController {
                     .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('WRITE_PERSONS')")
     @PostMapping
     public ResponseEntity<Person> createPerson(@RequestBody Person person) {
         if (person.getDni() != null && personRepository.existsByDni(person.getDni())) {
@@ -46,6 +51,7 @@ public class PersonController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPerson);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_PERSONS')")
     @PutMapping("/{id}")
     public ResponseEntity<Person> updatePerson(@PathVariable Long id, @RequestBody Person personDetails) {
         Optional<Person> personOptional = personRepository.findById(id);
@@ -66,6 +72,7 @@ public class PersonController {
         return ResponseEntity.ok(updatedPerson);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_PERSONS')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
         if (!personRepository.existsById(id)) {

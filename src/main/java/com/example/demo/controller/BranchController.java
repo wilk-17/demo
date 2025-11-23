@@ -6,23 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/branch")
+@RequestMapping("/api/branches")
 public class BranchController {
 
     @Autowired
     private BranchRepository branchRepository;
 
+    @PreAuthorize("hasAuthority('READ_BRANCHES')")
     @GetMapping
     public ResponseEntity<List<Branch>> getAllBranches() {
         List<Branch> branches = branchRepository.findAll();
         return ResponseEntity.ok(branches);
     }
 
+    @PreAuthorize("hasAuthority('READ_BRANCHES')")
     @GetMapping("/{id}")
     public ResponseEntity<Branch> getBranchById(@PathVariable Long id) {
         Optional<Branch> branch = branchRepository.findById(id);
@@ -30,24 +33,28 @@ public class BranchController {
                     .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('READ_BRANCHES')")
     @GetMapping("/organization/{organizationId}")
     public ResponseEntity<List<Branch>> getBranchesByOrganization(@PathVariable Long organizationId) {
         List<Branch> branches = branchRepository.findByOrganizationId(organizationId);
         return ResponseEntity.ok(branches);
     }
 
+    @PreAuthorize("hasAuthority('READ_BRANCHES')")
     @GetMapping("/city/{cityId}")
-    public ResponseEntity<List<Branch>> getBranchesByCity(@PathVariable Long cityId) {
+    public ResponseEntity<List<Branch>> getCitiesWithBranches(@PathVariable Long cityId) {
         List<Branch> branches = branchRepository.findByCityId(cityId);
         return ResponseEntity.ok(branches);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_BRANCHES')")
     @PostMapping
     public ResponseEntity<Branch> createBranch(@RequestBody Branch branch) {
         Branch savedBranch = branchRepository.save(branch);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBranch);
     }
 
+    @PreAuthorize("hasAuthority('WRITE_BRANCHES')")
     @PutMapping("/{id}")
     public ResponseEntity<Branch> updateBranch(@PathVariable Long id, @RequestBody Branch branchDetails) {
         Optional<Branch> branchOptional = branchRepository.findById(id);
@@ -64,6 +71,7 @@ public class BranchController {
         return ResponseEntity.ok(updatedBranch);
     }
 
+    @PreAuthorize("hasAuthority('DELETE_BRANCHES')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBranch(@PathVariable Long id) {
         if (!branchRepository.existsById(id)) {
