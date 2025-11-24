@@ -41,10 +41,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Inicio</a>
+                        <a class="nav-link active" href="/inventario">
+                            <i class="bi bi-box-seam"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" id="quotesLink" style="display:none;">
+                        <a class="nav-link" href="/cotizaciones">
+                            <i class="bi bi-file-text"></i> Cotizaciones
+                        </a>
+                    </li>
+                    <li class="nav-item" id="dashboardLink" style="display:none;">
+                        <a class="nav-link" href="/index">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/inventario">Inventario</a>
+                        <span class="nav-link" id="userDisplay"></span>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -189,46 +206,85 @@
 
         async function loadInventory() {
             try {
-                const [itemsResponse, categoriesResponse, brandsResponse] = await Promise.all([
-                    fetch('/api/inventory-items', { headers: getAuthHeaders() }),
-                    fetch('/api/item-categories', { headers: getAuthHeaders() }),
-                    fetch('/api/brands', { headers: getAuthHeaders() })
-                ]);
+                // Cargar artículos de inventario (requiere MANAGE_INVENTORY o READ_INVENTORY)
+                const itemsResponse = await fetch('/api/inventory-items', { headers: getAuthHeaders() });
+                
+                if (!itemsResponse.ok) {
+                    throw new Error('No tienes permisos para ver el inventario');
+                }
                 
                 allItems = await itemsResponse.json();
-                const categories = await categoriesResponse.json();
-                const brands = await brandsResponse.json();
-                
-                // Create lookup maps
-                categories.forEach(cat => categoriesData[cat.id] = cat);
-                brands.forEach(brand => brandsData[brand.id] = brand);
+
+                // Intentar cargar categorías (puede fallar si no tiene permisos)
+                let categories = [];
+                try {
+                    const categoriesResponse = await fetch('/api/item-categories', { headers: getAuthHeaders() });
+                    if (categoriesResponse.ok) {
+                        categories = await categoriesResponse.json();
+                        categories.forEach(cat => categoriesData[cat.id] = cat);
+                    }
+                } catch (error) {
+                    console.warn('Sin permisos para cargar categorías');
+                }
+
+                // Intentar cargar marcas (puede fallar si no tiene permisos)
+                let brands = [];
+                try {
+                    const brandsResponse = await fetch('/api/brands', { headers: getAuthHeaders() });
+                    if (brandsResponse.ok) {
+                        brands = await brandsResponse.json();
+                        brands.forEach(brand => brandsData[brand.id] = brand);
+                    }
+                } catch (error) {
+                    console.warn('Sin permisos para cargar marcas');
+                }
                 
                 // Populate category selector in form
                 const categorySelector = document.getElementById('categoryId');
-                categorySelector.innerHTML = '<option value="">Seleccione una categoría...</option>';
-                categories.forEach(cat => {
-                    categorySelector.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-                });
+                if (categories.length > 0) {
+                    categorySelector.innerHTML = '<option value="">Seleccione una categoría...</option>';
+                    categories.forEach(cat => {
+                        categorySelector.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                    });
+                } else {
+                    categorySelector.innerHTML = '<option value="">Sin acceso a categorías</option>';
+                    categorySelector.disabled = true;
+                }
                 
                 // Populate brand selector in form
                 const brandSelector = document.getElementById('brandId');
-                brandSelector.innerHTML = '<option value="">Seleccione una marca...</option>';
-                brands.forEach(brand => {
-                    brandSelector.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
-                });
+                if (brands.length > 0) {
+                    brandSelector.innerHTML = '<option value="">Seleccione una marca...</option>';
+                    brands.forEach(brand => {
+                        brandSelector.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
+                    });
+                } else {
+                    brandSelector.innerHTML = '<option value="">Sin acceso a marcas</option>';
+                    brandSelector.disabled = true;
+                }
 
                 // Populate filter dropdowns
                 const categoryFilter = document.getElementById('categoryFilter');
-                categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-                categories.forEach(cat => {
-                    categoryFilter.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-                });
+                if (categories.length > 0) {
+                    categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+                    categories.forEach(cat => {
+                        categoryFilter.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                    });
+                } else {
+                    categoryFilter.innerHTML = '<option value="">Todas</option>';
+                    categoryFilter.disabled = true;
+                }
 
                 const brandFilter = document.getElementById('brandFilter');
-                brandFilter.innerHTML = '<option value="">Todas las marcas</option>';
-                brands.forEach(brand => {
-                    brandFilter.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
-                });
+                if (brands.length > 0) {
+                    brandFilter.innerHTML = '<option value="">Todas las marcas</option>';
+                    brands.forEach(brand => {
+                        brandFilter.innerHTML += `<option value="${brand.id}">${brand.name}</option>`;
+                    });
+                } else {
+                    brandFilter.innerHTML = '<option value="">Todas</option>';
+                    brandFilter.disabled = true;
+                }
 
                 displayItems(allItems);
             } catch (error) {
@@ -236,7 +292,7 @@
                 document.getElementById('itemsTableBody').innerHTML = `
                     <tr>
                         <td colspan="8" class="text-center text-danger">
-                            <i class="bi bi-exclamation-triangle"></i> Error al cargar los datos
+                            <i class="bi bi-exclamation-triangle"></i> ${error.message || 'Error al cargar los datos'}
                         </td>
                     </tr>
                 `;
@@ -406,6 +462,34 @@
 
         // Load items on page load
         window.onload = loadInventory;
+
+        // Mostrar nombre de usuario y enlaces según permisos
+        const username = localStorage.getItem('username');
+        const role = localStorage.getItem('role');
+        const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
+        
+        if (username) {
+            document.getElementById('userDisplay').textContent = `👤 ${username} (${role})`;
+        }
+
+        // Mostrar enlaces según permisos
+        if (role === 'ADMIN') {
+            document.getElementById('dashboardLink').style.display = 'block';
+            document.getElementById('quotesLink').style.display = 'block';
+        } else {
+            // Mostrar cotizaciones si tiene permisos
+            if (permissions.includes('READ_QUOTES') || permissions.includes('WRITE_QUOTES')) {
+                document.getElementById('quotesLink').style.display = 'block';
+            }
+        }
+
+        // Función para cerrar sesión
+        function logout() {
+            if (confirm('¿Está seguro de cerrar sesión?')) {
+                localStorage.clear();
+                window.location.href = '/login';
+            }
+        }
     </script>
     <script src="/js/auth-guard.js"></script>
 </body>

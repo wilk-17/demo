@@ -8,126 +8,126 @@
 -- ========================================
 -- EMPLOYEE MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_EMPLOYEES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_EMPLOYEES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_EMPLOYEES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_EMPLOYEES', 'Ver empleados', 'EMPLOYEES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_EMPLOYEES', 'Crear y editar empleados', 'EMPLOYEES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_EMPLOYEES', 'Eliminar empleados', 'EMPLOYEES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- USER MANAGEMENT PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('MANAGE_USERS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('MANAGE_USERS', 'Administrar usuarios', 'ADMIN', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ROLE MANAGEMENT PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('MANAGE_ROLES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('MANAGE_ROLES', 'Administrar roles y permisos', 'ADMIN', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- BRANCH MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_BRANCHES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_BRANCHES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_BRANCHES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_BRANCHES', 'Ver sucursales', 'BRANCHES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_BRANCHES', 'Crear y editar sucursales', 'BRANCHES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_BRANCHES', 'Eliminar sucursales', 'BRANCHES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- STATE MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_STATES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_STATES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_STATES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_STATES', 'Ver estados', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_STATES', 'Crear y editar estados', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_STATES', 'Eliminar estados', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- CITY MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_CITIES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_CITIES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_CITIES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_CITIES', 'Ver ciudades', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_CITIES', 'Crear y editar ciudades', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_CITIES', 'Eliminar ciudades', 'LOCATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- PERSON MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_PERSONS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_PERSONS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_PERSONS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_PERSONS', 'Ver personas', 'PERSONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_PERSONS', 'Crear y editar personas', 'PERSONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_PERSONS', 'Eliminar personas', 'PERSONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ORGANIZATION MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_ORGANIZATIONS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_ORGANIZATIONS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_ORGANIZATIONS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_ORGANIZATIONS', 'Ver organizaciones', 'ORGANIZATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_ORGANIZATIONS', 'Crear y editar organizaciones', 'ORGANIZATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_ORGANIZATIONS', 'Eliminar organizaciones', 'ORGANIZATIONS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- BRAND MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_BRANDS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_BRANDS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_BRANDS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_BRANDS', 'Ver marcas', 'BRANDS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_BRANDS', 'Crear y editar marcas', 'BRANDS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_BRANDS', 'Eliminar marcas', 'BRANDS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- CATEGORY MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_CATEGORIES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_CATEGORIES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_CATEGORIES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_CATEGORIES', 'Ver categorías', 'CATEGORIES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_CATEGORIES', 'Crear y editar categorías', 'CATEGORIES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_CATEGORIES', 'Eliminar categorías', 'CATEGORIES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- INVENTORY MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_INVENTORY') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_INVENTORY') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_INVENTORY') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_INVENTORY', 'Ver inventario', 'INVENTORY', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_INVENTORY', 'Gestionar inventario', 'INVENTORY', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_INVENTORY', 'Eliminar artículos de inventario', 'INVENTORY', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- INVOICE MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_INVOICES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_INVOICES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_INVOICES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_INVOICES', 'Ver facturas', 'INVOICES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_INVOICES', 'Crear y editar facturas', 'INVOICES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_INVOICES', 'Eliminar facturas', 'INVOICES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- SALES ORDER MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_ORDERS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_ORDERS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_ORDERS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_ORDERS', 'Ver órdenes de venta', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_ORDERS', 'Crear y editar órdenes de venta', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_ORDERS', 'Eliminar órdenes de venta', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ASSIGNMENT MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_ASSIGNMENTS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_ASSIGNMENTS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_ASSIGNMENTS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_ASSIGNMENTS', 'Ver asignaciones', 'ASSIGNMENTS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_ASSIGNMENTS', 'Crear y editar asignaciones', 'ASSIGNMENTS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_ASSIGNMENTS', 'Eliminar asignaciones', 'ASSIGNMENTS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- QUOTE/COTIZACIÓN MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_QUOTES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_QUOTES') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_QUOTES') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_QUOTES', 'Ver cotizaciones', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_QUOTES', 'Crear y editar cotizaciones', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_QUOTES', 'Eliminar cotizaciones', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- SALES GOAL MODULE PERMISSIONS
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_GOALS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_GOALS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('DELETE_GOALS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_GOALS', 'Ver metas de ventas', 'GOALS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_GOALS', 'Crear y editar metas de ventas', 'GOALS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('DELETE_GOALS', 'Eliminar metas de ventas', 'GOALS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ADMIN PERMISSIONS (Full System Access)
 -- ========================================
-INSERT INTO permission (name) VALUES ('ADMIN_ALL') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('ADMIN_ALL', 'Acceso total al sistema', 'ADMIN', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- REPORTING PERMISSIONS (Kept from original)
 -- ========================================
-INSERT INTO permission (name) VALUES ('READ_REPORTS') ON CONFLICT (name) DO NOTHING;
-INSERT INTO permission (name) VALUES ('WRITE_REPORTS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('READ_REPORTS', 'Leer reportes del sistema', 'REPORTS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('WRITE_REPORTS', 'Crear y modificar reportes', 'REPORTS', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ORDER APPROVAL PERMISSION (Kept from original)
 -- ========================================
-INSERT INTO permission (name) VALUES ('APPROVE_ORDERS') ON CONFLICT (name) DO NOTHING;
+INSERT INTO permission (name, description, module, created_at) VALUES ('APPROVE_ORDERS', 'Aprobar órdenes de venta', 'SALES', CURRENT_TIMESTAMP) ON CONFLICT (name) DO NOTHING;
 
 -- ========================================
 -- ROLE-PERMISSION ASSIGNMENTS

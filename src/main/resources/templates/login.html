@@ -123,20 +123,14 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    // Verificar que sea ADMINISTRADOR
-                    if (data.roleName !== 'ADMIN') {
-                        errorAlert.textContent = '⚠️ Acceso denegado. Solo los administradores pueden acceder a este sistema.';
-                        errorAlert.classList.remove('d-none');
-                        return;
-                    }
-                    
                     // Guardar token y datos del usuario
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('role', data.roleName);
+                    localStorage.setItem('permissions', JSON.stringify(data.permissions || []));
                     
-                    // Redirigir automáticamente al dashboard
-                    window.location.href = '/index';
+                    // Redirigir según el rol y permisos
+                    redirectBasedOnPermissions(data.roleName, data.permissions);
                 } else {
                     const error = await response.text();
                     errorAlert.textContent = 'Error: ' + (error || 'Credenciales incorrectas');
@@ -158,15 +152,9 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    // Si ya tiene sesión válida, redirigir al dashboard
-                    if (data.roleName === 'ADMIN') {
-                        window.location.href = '/index';
-                    } else {
-                        logout();
-                        const errorAlert = document.getElementById('errorAlert');
-                        errorAlert.textContent = '⚠️ Acceso denegado. Solo los administradores pueden acceder a este sistema.';
-                        errorAlert.classList.remove('d-none');
-                    }
+                    // Si ya tiene sesión válida, redirigir según permisos
+                    localStorage.setItem('permissions', JSON.stringify(data.permissions || []));
+                    redirectBasedOnPermissions(data.roleName, data.permissions);
                 } else {
                     logout();
                 }
@@ -197,10 +185,39 @@
             `;
         }
 
+        function redirectBasedOnPermissions(role, permissions) {
+            // ADMIN tiene acceso al dashboard completo
+            if (role === 'ADMIN') {
+                window.location.href = '/index';
+                return;
+            }
+            
+            // Para otros roles, redirigir según permisos disponibles
+            const permissionsArray = permissions || [];
+            
+            // Prioridad de redirección basada en permisos
+            if (permissionsArray.includes('READ_QUOTES') || permissionsArray.includes('WRITE_QUOTES')) {
+                window.location.href = '/cotizaciones';
+            } else if (permissionsArray.includes('MANAGE_INVENTORY') || permissionsArray.includes('READ_INVENTORY')) {
+                window.location.href = '/inventario';
+            } else if (permissionsArray.includes('READ_ORDERS') || permissionsArray.includes('WRITE_ORDERS')) {
+                window.location.href = '/ordenes-venta';
+            } else if (permissionsArray.includes('READ_EMPLOYEES')) {
+                window.location.href = '/empleados';
+            } else {
+                // Si no tiene permisos específicos, mostrar mensaje
+                logout();
+                const errorAlert = document.getElementById('errorAlert');
+                errorAlert.textContent = '⚠️ No tienes permisos asignados para acceder al sistema.';
+                errorAlert.classList.remove('d-none');
+            }
+        }
+
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('username');
             localStorage.removeItem('role');
+            localStorage.removeItem('permissions');
             
             document.getElementById('loginForm').classList.remove('d-none');
             document.getElementById('userInfo').classList.add('d-none');

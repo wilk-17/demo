@@ -31,16 +31,13 @@
             
             const data = await response.json();
             
-            // Verificar que sea administrador
-            if (data.roleName !== 'ADMIN') {
-                console.log('Usuario no es administrador, redirigiendo al login...');
-                localStorage.clear();
-                alert('⚠️ Acceso denegado. Solo los administradores pueden acceder a este sistema.');
-                window.location.href = '/login';
-                return;
-            }
+            // Guardar permisos actualizados
+            localStorage.setItem('role', data.roleName);
+            localStorage.setItem('permissions', JSON.stringify(data.permissions || []));
             
-            console.log('Usuario autenticado correctamente:', data.username);
+            // Las páginas individuales pueden verificar permisos específicos
+            // Este guard solo verifica que haya un token válido
+            console.log('Usuario autenticado correctamente:', data.username, '- Rol:', data.roleName);
             
         } catch (error) {
             console.error('Error verificando autenticación:', error);
